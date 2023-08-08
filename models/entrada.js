@@ -4,6 +4,7 @@ const partesencuestavehiculo=require('./partesencuestavehiculo')
 const papelesencuestavehiculo=require('./papelesencuestavehiculo')
 const herramientasencuestavehiculo=require('./herramientasencuestavehiculo')
 const nivelesencuestavehiculo=require('./nivelesencuestavehiculo')
+const Colaborador=require('./colaborador')
 
 const Entrada = sequelize.define('entrada', {
   id: {
@@ -43,6 +44,10 @@ const Entrada = sequelize.define('entrada', {
     type: DataTypes.STRING(20),
     defaultValue: null,
   },
+  foto_cliente: {
+    type: DataTypes.STRING(255),
+    defaultValue: null,
+  },
 
 }, {
   tableName: 'entrada',
@@ -52,5 +57,8 @@ Entrada.hasMany(partesencuestavehiculo);
 Entrada.hasMany(papelesencuestavehiculo);
 Entrada.hasMany(herramientasencuestavehiculo);
 Entrada.hasMany(nivelesencuestavehiculo);
+
+Entrada.belongsTo(Colaborador, { foreignKey: 'documento_colaborador', targetKey: 'documento', as: 'colaborador_asociation' });
+
 
 module.exports = Entrada;

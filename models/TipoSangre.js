@@ -1,19 +1,19 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
 
-const Genero = sequelize.define('genero', {
+const TipoSangre = sequelize.define('tipoSangre', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-  genero: { // Cambio en el nombre de campo a minúsculas
-    type: DataTypes.STRING(10),
+  grupoSanguineo: { // Cambio en el nombre de campo a minúsculas
+    type: DataTypes.STRING(5),
     allowNull: false,
   },
 }, {
-  tableName: 'genero',
+  tableName: 'gruposanguineo',
   timestamps: false,
 });
 
-module.exports = Genero;
+module.exports = TipoSangre;

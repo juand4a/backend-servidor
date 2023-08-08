@@ -3,10 +3,16 @@ const PartesEncuestaVehiculo = require('../models/partesencuestavehiculo');
 const PapelesEncuestaVehiculo = require('../models/papelesencuestavehiculo'); // Asegúrate de que la ruta del archivo sea correcta
 const HerramientasEncuestaVehiculo=require('../models/herramientasencuestavehiculo');
 const NivelesEncuestaVehiculo=require('../models/nivelesencuestavehiculo');
+const Colaborador=require('./../models/colaborador')
+
+const moment = require('moment');
+const { Op } = require('sequelize');
+ 
 
 // Obtener todos los colaboradores
 exports.getAllEntrada = (req, res) => {
   Entrada.findAll()
+  
     .then(entrada => {
       res.json(entrada);
     })
@@ -16,25 +22,39 @@ exports.getAllEntrada = (req, res) => {
     });
 };
 
-// Obtener un colaborador por ID
-exports.getEntradaById = (req, res) => {
-  const entradaId = req.params.id;
+// Obtener un colaborador por FECHA
+exports.getEntradaByFecha = (req, res) => {
+  const fecha = req.params.fecha;
 
-  Entrada.findByPk(entradaId)
-    .then(entrada => {
-      if (!entrada) {
-        return res.status(404).json({ error: 'entrada no encontrado' });
+  // Parsea la fecha usando Moment.js para asegurarte de que esté en formato ISO8601
+  const fechaISO8601 = moment(fecha, 'YYYY-MM-DD').toISOString();
+
+  // Elimina la información de hora de la fecha proporcionada para buscar por igualdad
+  const fechaSinHora = fechaISO8601.split('T')[0];
+
+  Entrada.findAll({ 
+    where: { fecha: { [Op.startsWith]: fechaSinHora } },
+    include: [
+      {
+        model: Colaborador,
+        attributes: ['nombres','apellidos'], // O los atributos que quieras obtener del Colaborador
+        as: 'colaborador_asociation'
       }
-      res.json(entrada);
+    ]
+  })
+    .then(entradas => {
+      if (entradas.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron entradas para la fecha especificada' });
+      }
+      res.json(entradas);
     })
     .catch(err => {
       console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener la entrada' });
+      res.status(500).json({ error: 'Ocurrió un error al obtener las entradas por fecha' });
     });
 };
 
 // Crear un nueva entrada
-// controllers.js
 exports.createEntrada = async (req, res) => {
   const {
     documento_colaborador,
@@ -45,6 +65,7 @@ exports.createEntrada = async (req, res) => {
     kilometraje,
     placa,
     tipo_vehiculo,
+    foto_cliente,
    partesEncuestaVehiculo,
     papelesEncuestaVehiculo,
     herramientasEncuestaVehiculo,
@@ -62,6 +83,7 @@ exports.createEntrada = async (req, res) => {
       kilometraje,
       placa,
       tipo_vehiculo,
+      foto_cliente,
     });
 
     // Guardar las partes de la encuesta del vehículo
@@ -126,9 +148,9 @@ exports.createEntrada = async (req, res) => {
 // Actualizar un colaborador
 exports.updateEntrada = (req, res) => {
   const entradaId = req.params.documento_colaborador
-  const {salida,cliente} = req.body;
+  const {salida,cliente,foto_cliente} = req.body;
 
-  Entrada.update({ salida,cliente }, { where: { documento_colaborador: entradaId ,}  })
+  Entrada.update({ salida,cliente,foto_cliente}, { where: { documento_colaborador: entradaId ,}  })
     .then(result => {
       if (result[0] === 0) {
         return res.status(404).json({ error: 'Colaborador no encontrado' });

@@ -16,10 +16,10 @@ exports.login = (req, res) => {
         return res.status(404).json({ error: 'Correo electrónico no encontrado' });
       }
 
-      // Comprobar la contraseña sin encriptar
-      if (pw === colaborador.pw) {
+      if (bcrypt.compareSync(pw, colaborador.pw)) {
         const colaboradorData = colaborador.toJSON();
-        delete colaboradorData.pw; // Eliminar la contraseña sin encriptar del objeto de datos del colaborador
+        delete colaboradorData.pw;
+
 
         const token = jwt.sign({ correo: colaborador.correo }, 'secretKey');
 

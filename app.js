@@ -27,11 +27,13 @@ const colaboradorRoutes = require('./routes/colaborador');
 const loginRoutes = require('./routes/login');
 const entradaRoutes=require('./routes/asistencia');
 const foreingkeys=require('./routes/foreingkeys');
+const productos=require('./routes/productos')
 
 app.use('/entrada', entradaRoutes)
 app.use('/colaborador', colaboradorRoutes);
 app.use('/login', loginRoutes);
 app.use('/foreingkey',foreingkeys)
+app.use('/productos',productos)
 
 // Inicio del servidor
 app.listen(port, () => {

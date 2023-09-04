@@ -6,7 +6,7 @@ const colaboradorController = require('../controllers/colaboradorController');
 router.get('/', colaboradorController.getAllColaboradores);
 router.get('/:id', colaboradorController.getColaboradorById);
 router.post('/', colaboradorController.createColaborador);
-router.put('/:id', colaboradorController.updateColaborador);
+router.put('/:documento_colaborador',colaboradorController.updateColaborador)
 router.delete('/:id', colaboradorController.deleteColaborador);
 
 module.exports = router;

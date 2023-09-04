@@ -1,10 +1,11 @@
-const Genero =require('./../models/Genero')
+const Ciudad=require('../models/Ciudad')
 
-exports.getAllGenero = (req, res) => {
-    Genero.findAll()
+
+exports.getAllCiudad = (req, res) => {
+  Ciudad.findAll()
     
-      .then(genero => {
-        res.json(genero);
+      .then(ciudad => {
+        res.json(ciudad);
       })
       .catch(err => {
         console.error(err);

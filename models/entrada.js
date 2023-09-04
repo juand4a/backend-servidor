@@ -4,6 +4,8 @@ const partesencuestavehiculo=require('./partesencuestavehiculo')
 const papelesencuestavehiculo=require('./papelesencuestavehiculo')
 const herramientasencuestavehiculo=require('./herramientasencuestavehiculo')
 const nivelesencuestavehiculo=require('./nivelesencuestavehiculo')
+const elementosproteccionencuestavehiculo=require('./elementosproteccionencuestavehiculo')
+const puntos=require('./Puntos')
 const Colaborador=require('./colaborador')
 
 const Entrada = sequelize.define('entrada', {
@@ -57,6 +59,8 @@ Entrada.hasMany(partesencuestavehiculo);
 Entrada.hasMany(papelesencuestavehiculo);
 Entrada.hasMany(herramientasencuestavehiculo);
 Entrada.hasMany(nivelesencuestavehiculo);
+Entrada.hasMany(elementosproteccionencuestavehiculo);
+Entrada.hasMany(puntos);
 
 Entrada.belongsTo(Colaborador, { foreignKey: 'documento_colaborador', targetKey: 'documento', as: 'colaborador_asociation' });
 

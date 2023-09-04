@@ -1,7 +1,7 @@
 const Colaborador = require('../models/colaborador');
 const Genero = require('../models/Genero');
-const Cargo=require('../models/Cargo')
-const tipoSangre=require('../models/TipoSangre')
+const Cargo = require('../models/Cargo')
+const tipoSangre = require('../models/TipoSangre')
 const bcrypt = require('bcrypt');
 
 // Obtener todos los colaboradores
@@ -50,7 +50,7 @@ exports.getColaboradorById = (req, res) => {
         attributes: ['cargo'],
         as: 'cargo_asociation'
       }
-  
+
     ]
   })
     .then(colaborador => {
@@ -126,7 +126,7 @@ exports.createColaborador = (req, res) => {
       estadoCuenta,
       qrCodeUrl,
       fotoUrl,
-      jefeInmediato:null,
+      jefeInmediato: null,
       eps,
       afp,
       grupoSanguineo,
@@ -148,20 +148,57 @@ exports.createColaborador = (req, res) => {
 
 // Actualizar un colaborador
 exports.updateColaborador = (req, res) => {
-  const colaboradorId = req.params.id;
-  const { correo, pw, nombres, apellidos } = req.body;
+  const documentop = req.params.documento_colaborador
+  const { nombres,
+    apellidos,
+    genero,
+    celular,
+    fechaNacimiento,
+    fechaIngreso,
+    salario,
+    ciudadNacimiento,
+    ciudadResidencia,
+    direccionResidencia,
+    correo,
+    eps,
+    afp,
+    grupoSanguineo,
+    estrato,
+    estadoCivil,
+    telefonoFijo,
+    estatura,
+    peso } = req.body;
 
-  Colaborador.update({ correo, pw, nombres, apellidos }, { where: { id: colaboradorId } })
+  Colaborador.update({nombres,
+    apellidos,
+    genero,
+    celular,
+    fechaNacimiento,
+    fechaIngreso,
+    salario,
+    ciudadNacimiento,
+    ciudadResidencia,
+    direccionResidencia,
+    correo,
+    eps,
+    afp,
+    grupoSanguineo,
+    estrato,
+    estadoCivil,
+    telefonoFijo,
+    estatura,
+    peso }, { where: { documento: documentop, } })
     .then(result => {
       if (result[0] === 0) {
         return res.status(404).json({ error: 'Colaborador no encontrado' });
       }
-      res.json({ message: 'Colaborador actualizado correctamente' });
+      res.json({ success: true });
     })
     .catch(err => {
       console.error(err);
       res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
     });
+
 };
 
 // Eliminar un colaborador

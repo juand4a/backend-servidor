@@ -3,6 +3,6 @@ const router = express.Router();
 const foreingkeysController = require('../controllers/controllerForeingKey');
 
 
-router.get('/', foreingkeysController.getAllGenero);
+router.get('/', foreingkeysController.getAllCiudad);
 
 module.exports = router;

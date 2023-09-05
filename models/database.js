@@ -4,7 +4,7 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize('mvc_node', 'mvcnoderdm', '10016522799003788350', {
   host: 'localhost',
   dialect: 'mysql',
-  // logging: false,
+   logging: false,
 });
 
 // Probar la conexión

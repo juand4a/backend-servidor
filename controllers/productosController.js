@@ -1,9 +1,9 @@
 const Productos=require('../models/productos')
 const Puntos=require('./../models/Puntos')
 const EstadoSolicitud = require('../models/EstadoSolicitud');
-
-
 const Solicitud=require('./../models/solicitudpedidos')
+const moment = require('moment');
+const { Op } = require('sequelize');
 
 exports.getAllProducts = (req, res) => {
     Productos.findAll()
@@ -84,6 +84,36 @@ exports.getAllProducts = (req, res) => {
         res.status(500).json({ error: 'Ocurrió un error al obtener las entradas' });
       });
   };
+
+
+  exports.getAllRequesByDocument = (req, res) => {
+    const documento = req.params.documento;
+    const whereClause = {
+      documento_colaborador: {
+        [Op.eq]: documento
+      }
+    };
+  
+    Solicitud.findAll({
+      where: whereClause,
+      include: [
+        {
+          model:EstadoSolicitud ,
+          attributes: ['estadoSolicitud'],
+          as: 'estado_asociation'
+        }
+      ]
+    })
+  
+      .then(Solicitud => {
+        res.json(Solicitud);
+      })
+      .catch(err => {
+        console.error(err);
+        res.status(500).json({ error: 'Ocurrió un error al obtener las entradas' });
+      });
+  };
+
 
   exports.createRequest = async (req, res) => {
     const {

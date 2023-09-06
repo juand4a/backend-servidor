@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 
 // Configuración de la conexión a la base de datos
-const sequelize = new Sequelize('mvc_node', 'mvcnoderdm', '10016522799003788350', {
+const sequelize = new Sequelize('rdm_general_dev', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
    logging: false,

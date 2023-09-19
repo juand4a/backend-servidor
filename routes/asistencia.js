@@ -9,7 +9,7 @@ router.get('/buscar-entradas/:documento/:fecha', entradaController.getEntradaByD
 router.get('/buscar-entradasMes/:documento/:fecha', entradaController.getEntradasByMonth);
 router.get('/buscar-entradas/:documento', entradaController.getEntradaByDocumento);
 router.post('/', entradaController.createEntrada);
-router.put('/:documento_colaborador',entradaController.updateEntrada)
+router.put('/actualizar/:documento/:fecha',entradaController.updateEntrada)
 
 
 module.exports = router;

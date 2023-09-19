@@ -1,9 +1,9 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('./database');
+const sequelize = require('../config/database');
 const Genero = require('./Genero');
 const Cargo = require('./Cargo');
 const TipoSangre=require('./TipoSangre')
-
+const TipoContrato=require('./TipoContrato')
 const Colaborador = sequelize.define('colaborador', {
   id: {
     type: DataTypes.INTEGER,
@@ -131,5 +131,6 @@ const Colaborador = sequelize.define('colaborador', {
 Colaborador.belongsTo(Genero, { foreignKey: 'genero', as: 'genero_asociation' });
 Colaborador.belongsTo(Cargo, { foreignKey: 'cargo', as: 'cargo_asociation' });
 Colaborador.belongsTo(TipoSangre, { foreignKey: 'grupoSanguineo', as: 'tipoSangre_asociation' });
+Colaborador.belongsTo(TipoContrato, { foreignKey: 'tipoContrato', as: 'tipoContrato_asociation' });
 
 module.exports = Colaborador;

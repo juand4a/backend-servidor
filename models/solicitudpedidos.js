@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('./database');
+const sequelize = require('../config/database');
 const Productos=require('./productos')
 const EstadoSolicitud = require('./EstadoSolicitud');
+const Colaborador = require('./colaborador');
 
 const SolicitudPedidos = sequelize.define('solicitudpedidos', {
   id: {
@@ -35,5 +36,7 @@ const SolicitudPedidos = sequelize.define('solicitudpedidos', {
 });
 SolicitudPedidos.belongsTo(EstadoSolicitud, { foreignKey: 'estadoSolicitud', as: 'estado_asociation' });
 SolicitudPedidos.belongsTo(Productos, { foreignKey: 'id_producto', as: 'producto_asociation' });
+SolicitudPedidos.belongsTo(Colaborador, { foreignKey: 'documento_colaborador', targetKey: 'documento', as: 'colaborador_asociation' });
+
 
 module.exports = SolicitudPedidos;

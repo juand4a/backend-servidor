@@ -1,11 +1,12 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('./database');
+const sequelize = require('../config/database');
 const partesencuestavehiculo=require('./partesencuestavehiculo')
 const papelesencuestavehiculo=require('./papelesencuestavehiculo')
 const herramientasencuestavehiculo=require('./herramientasencuestavehiculo')
 const nivelesencuestavehiculo=require('./nivelesencuestavehiculo')
 const elementosproteccionencuestavehiculo=require('./elementosproteccionencuestavehiculo')
 const puntos=require('./Puntos')
+const encuestavehiculo=require('./encuestavehiculo')
 const Colaborador=require('./colaborador')
 
 const Entrada = sequelize.define('entrada', {
@@ -46,8 +47,12 @@ const Entrada = sequelize.define('entrada', {
     type: DataTypes.STRING(20),
     defaultValue: null,
   },
-  foto_cliente: {
-    type: DataTypes.STRING(255),
+  foto_salida: {
+    type: DataTypes.STRING,
+    defaultValue: null,
+  },
+  foto_entrada: {
+    type: DataTypes.STRING,
     defaultValue: null,
   },
 
@@ -60,6 +65,7 @@ Entrada.hasMany(papelesencuestavehiculo);
 Entrada.hasMany(herramientasencuestavehiculo);
 Entrada.hasMany(nivelesencuestavehiculo);
 Entrada.hasMany(elementosproteccionencuestavehiculo);
+Entrada.hasMany(encuestavehiculo)
 Entrada.hasMany(puntos);
 
 Entrada.belongsTo(Colaborador, { foreignKey: 'documento_colaborador', targetKey: 'documento', as: 'colaborador_asociation' });

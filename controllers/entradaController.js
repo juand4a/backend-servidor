@@ -1,10 +1,15 @@
 const Entrada = require('../models/entrada');
 const PartesEncuestaVehiculo = require('../models/partesencuestavehiculo');
-const PapelesEncuestaVehiculo = require('../models/papelesencuestavehiculo'); // Asegúrate de que la ruta del archivo sea correcta
+const PapelesEncuestaVehiculo = require('../models/papelesencuestavehiculo');
+const EncuestaVehiculo=require('../models/encuestavehiculo')
 const HerramientasEncuestaVehiculo=require('../models/herramientasencuestavehiculo');
 const NivelesEncuestaVehiculo=require('../models/nivelesencuestavehiculo');
 const ElementosProteccionEncuestaVehiculo=require('../models/elementosproteccionencuestavehiculo');
 const Puntos=require('./../models/Puntos')
+const multer = require('multer');
+const upload = multer(); 
+
+
 const Colaborador=require('./../models/colaborador')
 
 const moment = require('moment');
@@ -176,13 +181,14 @@ exports.createEntrada = async (req, res) => {
     kilometraje,
     placa,
     tipo_vehiculo,
-    foto_cliente,
+    foto_salida,
+    foto_entrada,
    partesEncuestaVehiculo,
     papelesEncuestaVehiculo,
     herramientasEncuestaVehiculo,
     nivelesEncuestaVehiculo,
     elementosProteccionEncuestaVehiculo,
-    puntos
+  
   } = req.body;
 
   try {
@@ -196,7 +202,8 @@ exports.createEntrada = async (req, res) => {
       kilometraje,
       placa,
       tipo_vehiculo,
-      foto_cliente,
+      foto_salida,
+      foto_entrada
     });
 
     // Guardar las partes de la encuesta del vehículo
@@ -233,7 +240,6 @@ exports.createEntrada = async (req, res) => {
       }))
     )
 
-    // Aquí puedes usar directamente papelesEncuestaVehiculo sin inicializarlo nuevamente
     const papelesEncuestaGuardados = await PapelesEncuestaVehiculo.bulkCreate(
       papelesEncuestaVehiculo.map((papeles) => ({
         idEncuesta: nuevaEntrada.id,
@@ -241,6 +247,14 @@ exports.createEntrada = async (req, res) => {
         poseeDocumento: papeles.poseeDocumento,
       }))
     );
+    const EncuestaGuardados = await EncuestaVehiculo.create({
+      idColaborador:nuevaEntrada.documento_colaborador ,
+      placa:nuevaEntrada.placa,
+      observaciones:"N/A",
+      kilometraje:nuevaEntrada.kilometraje,
+      fecha:nuevaEntrada.fecha,
+    });
+    
     
     if (nuevaEntrada.documento_colaborador) {
       const puntosValue = (nuevaEntrada.entrada <= '24:00:00') ? 1 : 0;
@@ -283,7 +297,8 @@ exports.createEntrada = async (req, res) => {
       papelesEncuestaGuardados, 
       herramientasEncuestaGuardadas,
       nivelesEncuestaGuardadas,
-      elementosEncuestaGuardadas
+      elementosEncuestaGuardadas,
+      EncuestaGuardados
   
     });
   } catch (error) {
@@ -293,20 +308,45 @@ exports.createEntrada = async (req, res) => {
       .json({ error: 'Ocurrió un error al guardar los datos en la base de datos' });
   }
 };
-// Actualizar un colaborador
-exports.updateEntrada = (req, res) => {
-  const entradaId = req.params.documento_colaborador
-  const {salida,cliente} = req.body;
 
-  Entrada.update({ salida,cliente}, { where: { documento_colaborador: entradaId ,}  })
-    .then(result => {
-      if (result[0] === 0) {
-        return res.status(404).json({ error: 'Colaborador no encontrado' });
+
+
+exports.updateEntrada = async (req, res) => {
+  try {
+    const documento = req.params.documento;
+    const fecha = req.params.fecha;
+
+    if (!fecha) {
+      return res.status(400).json({ error: 'La fecha es un parámetro obligatorio.' });
+    }
+
+    // Convierte la fecha proporcionada en formato ISO8601
+    const fechaISO8601 = moment(fecha, 'YYYY-MM-DD').toISOString();
+
+    // Elimina la información de hora de la fecha para buscar por igualdad
+    const fechaSinHora = fechaISO8601.split('T')[0];
+
+    const whereClause = {
+      documento_colaborador: documento,
+      fecha: {
+        [Op.startsWith]: fechaSinHora
       }
-      res.json({ success: true});
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
-    });
+    };
+
+    const { salida, cliente,foto_salida } = req.body;
+
+    const [updatedRows] = await Entrada.update(
+      { salida, cliente,foto_salida },
+      { where: whereClause }
+    );
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ error: 'Colaborador no encontrado o la fecha no coincide' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
+  }
 };

@@ -2,7 +2,8 @@ const Colaborador = require('../models/colaborador');
 const Genero = require('../models/Genero');
 const Cargo = require('../models/Cargo')
 const tipoSangre = require('../models/TipoSangre')
-const bcrypt = require('bcrypt');
+const tipoContrato = require('../models/TipoContrato')
+ const bcrypt = require('bcrypt');
 
 // Obtener todos los colaboradores
 exports.getAllColaboradores = (req, res) => {
@@ -22,6 +23,11 @@ exports.getAllColaboradores = (req, res) => {
         model: tipoSangre,
         attributes: ['grupoSanguineo'],
         as: 'tipoSangre_asociation'
+      },
+      {
+        model: tipoContrato,
+        attributes: ['tipoContrato'],
+        as: 'tipoContrato_asociation'
       }
     ]
   })
@@ -49,6 +55,11 @@ exports.getColaboradorById = (req, res) => {
         model: Cargo,
         attributes: ['cargo'],
         as: 'cargo_asociation'
+      },
+      {
+        model: tipoContrato,
+        attributes: ['tipoContrato'],
+        as: 'tipoContrato_asociation'
       }
 
     ]

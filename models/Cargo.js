@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+const Area=require('./Area')
 const Cargo = sequelize.define('cargo', {
   id: {
     type: DataTypes.INTEGER,
@@ -24,5 +25,7 @@ const Cargo = sequelize.define('cargo', {
   tableName: 'cargo',
   timestamps: false,
 });
+Cargo.belongsTo(Area, { foreignKey: 'area', as: 'area_asociation' });
+
 
 module.exports = Cargo;

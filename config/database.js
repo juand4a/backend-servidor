@@ -4,6 +4,8 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize('rdm_general_dev', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
+  logging: true, 
+
 
 });
 
@@ -18,3 +20,4 @@ sequelize
   });
 
 module.exports = sequelize;
+

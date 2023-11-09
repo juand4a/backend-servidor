@@ -29,6 +29,12 @@ const loginRoutes = require('./routes/login');
 const entradaRoutes=require('./routes/asistencia');
 const foreingkeys=require('./routes/foreingkeys');
 const productos=require('./routes/productos')
+const anuncios=require('./routes/anuncios')
+const colillas=require('./routes/colillas')
+const permisos=require('./routes/permisos')
+const capacitacion=require('./routes/capacitacion')
+const likesComentarios=require('./routes/comentariosLikes')
+const incapacidad=require('./routes/incapacidad')
 
 app.get("/",(req,res)=>{
   res.status(5).json({mensaje:"hola"})
@@ -38,7 +44,12 @@ app.use('/colaborador', colaboradorRoutes);
 app.use('/login', loginRoutes);
 app.use('/foreingkey',foreingkeys)
 app.use('/productos',productos)
-
+app.use('/anuncio',anuncios)
+app.use('/colilla',colillas)
+app.use('/permisos',permisos)
+app.use('/capacitacion',capacitacion)
+app.use('/likesComentarios',likesComentarios)
+app.use('/incapacidad',incapacidad)
 // Inicio del servidor
 app.listen(port, () => {
   console.log(`Servidor en funcionamiento en el puerto ${port}`);

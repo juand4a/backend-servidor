@@ -6,6 +6,7 @@ const HerramientasEncuestaVehiculo=require('../models/herramientasencuestavehicu
 const NivelesEncuestaVehiculo=require('../models/nivelesencuestavehiculo');
 const ElementosProteccionEncuestaVehiculo=require('../models/elementosproteccionencuestavehiculo');
 const Puntos=require('./../models/Puntos')
+const Cargo=require('./../models/Cargo')
 const multer = require('multer');
 const upload = multer(); 
 
@@ -97,6 +98,58 @@ exports.getEntradaByFecha = (req, res) => {
       res.status(500).json({ error: 'Ocurrió un error al obtener las entradas por fecha' });
     });
 };
+exports.getEntrada = (req, res) => {
+  const fecha = req.params.fecha;
+  const cargo = req.params.cargo; // Supongamos que obtienes el valor de cargo desde la solicitud.
+
+  // Parsea la fecha usando Moment.js para asegurarte de que esté en formato ISO8601
+  const fechaISO8601 = moment(fecha, 'YYYY-MM-DD').toISOString();
+
+  // Elimina la información de hora de la fecha proporcionada para buscar por igualdad
+  const fechaSinHora = fechaISO8601.split('T')[0];
+
+  // Define un objeto que contiene la lógica de filtro basada en el valor de cargo.
+  let whereClause = {};
+
+  if (cargo === '12' || cargo === '1' || cargo === '2' || cargo === '15') {
+    // Si cargo es 12, 1, 2 o 15, no aplicamos ningún filtro adicional.
+    whereClause = { fecha: { [Op.startsWith]: fechaSinHora } };
+  } else if (cargo === '9') {
+    // Si cargo es 9, filtramos por colaboradores con cargo 10 o 6.
+    whereClause = {
+      fecha: { [Op.startsWith]: fechaSinHora },
+      '$colaborador_asociation.cargo$': { [Op.or]: ['10', '6'] }
+    };
+  } else if (cargo === '4') {
+    // Si cargo es 4, filtramos por colaboradores con cargo 5.
+    whereClause = {
+      fecha: { [Op.startsWith]: fechaSinHora },
+      '$colaborador_asociation.cargo$': '5'
+    };
+  }
+
+  Entrada.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: Colaborador,
+        attributes: ['nombres', 'apellidos'],
+        as: 'colaborador_asociation'
+      }
+    ]
+  })
+    .then(entradas => {
+      if (entradas.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron entradas para la fecha y cargo especificados' });
+      }
+      res.json(entradas);
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: 'Ocurrió un error al obtener las entradas por fecha y cargo' });
+    });
+};
+
 exports.getEntradaByDocumentoYFecha = (req, res) => {
   const documento = req.params.documento;
   const fecha = req.params.fecha;
@@ -257,7 +310,7 @@ exports.createEntrada = async (req, res) => {
     
     
     if (nuevaEntrada.documento_colaborador) {
-      const puntosValue = (nuevaEntrada.entrada <= '24:00:00') ? 1 : 0;
+      const puntosValue = (nuevaEntrada.entrada <= '6:00:00') ? 1 : 0;
     
       // Verificar si ya existe un registro en la tabla puntos con el mismo documento_colaborador
       const existingPuntos = await Puntos.findOne({
@@ -350,3 +403,4 @@ exports.updateEntrada = async (req, res) => {
     res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
   }
 };
+

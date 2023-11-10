@@ -35,6 +35,7 @@ const permisos=require('./routes/permisos')
 const capacitacion=require('./routes/capacitacion')
 const likesComentarios=require('./routes/comentariosLikes')
 const incapacidad=require('./routes/incapacidad')
+const encuestaVehiculo=require('./routes/encuestaVehiculo')
 
 app.get("/",(req,res)=>{
   res.status(5).json({mensaje:"hola"})
@@ -50,6 +51,7 @@ app.use('/permisos',permisos)
 app.use('/capacitacion',capacitacion)
 app.use('/likesComentarios',likesComentarios)
 app.use('/incapacidad',incapacidad)
+app.use('/vehiculo',encuestaVehiculo)
 // Inicio del servidor
 app.listen(port, () => {
   console.log(`Servidor en funcionamiento en el puerto ${port}`);

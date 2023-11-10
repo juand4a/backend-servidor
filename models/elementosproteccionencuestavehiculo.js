@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const ElementosProteccion=require('./elementosproteccion')
 
 
 const ElementosProteccionEncuestaVehiculo = sequelize.define('elementosproteccionencuestavehiculo', {
@@ -22,5 +23,8 @@ const ElementosProteccionEncuestaVehiculo = sequelize.define('elementosproteccio
   tableName: 'elementosproteccionencuestavehiculo',
   timestamps: false,
 });
+
+ElementosProteccionEncuestaVehiculo.belongsTo(ElementosProteccion, { foreignKey: 'idElementoProteccion', as: 'elementosProteccion_asociation' });
+
 
 module.exports = ElementosProteccionEncuestaVehiculo;

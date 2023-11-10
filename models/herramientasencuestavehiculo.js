@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Herramientas=require('./herramientasVehiculo')
 
 
 const HerramientasEncuestaVehiculo = sequelize.define('herramientasencuestavehiculo', {
@@ -22,5 +23,8 @@ const HerramientasEncuestaVehiculo = sequelize.define('herramientasencuestavehic
   tableName: 'herramientasencuestavehiculo',
   timestamps: false,
 });
+
+HerramientasEncuestaVehiculo.belongsTo(Herramientas, { foreignKey: 'idHerramientaVehiculo', as: 'herramientasencuestavehiculo_asociation' });
+
 
 module.exports = HerramientasEncuestaVehiculo;

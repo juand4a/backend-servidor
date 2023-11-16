@@ -4,6 +4,7 @@ const Herramientas = require('../models/herramientasVehiculo');
 const HerramientasProteccionEncuestaVehiculo = require('../models/herramientasencuestavehiculo');
 const Niveles = require('../models/nivelesvehiculo');
 const NivelesEncuestaVehiculo = require('../models/nivelesencuestavehiculo');
+const EncuestaVehiculo = require('../models/encuestavehiculo');
 const Papeles = require('../models/papelesVehiculo');
 const PapelesEncuestaVehiculo = require('../models/papelesencuestavehiculo');
 

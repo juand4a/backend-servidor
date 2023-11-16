@@ -8,6 +8,8 @@ router.get('/:fecha', entradaController.getEntradaByFecha);
 router.get('/cargo/:fecha/:cargo', entradaController.getEntrada);
 router.get('/buscar-entradas/:documento/:fecha', entradaController.getEntradaByDocumentoYFecha);
 router.get('/buscar-entradasMes/:documento/:fecha', entradaController.getEntradasByMonth);
+router.get('/buscar-estadisticaMes/:documento/:fecha', entradaController.getEntradasByMonthEstadistica);
+
 router.get('/buscar-entradas/:documento', entradaController.getEntradaByDocumento);
 router.post('/', entradaController.createEntrada);
 router.put('/actualizar/:documento/:fecha',entradaController.updateEntrada)

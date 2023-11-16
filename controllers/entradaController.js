@@ -51,7 +51,7 @@ exports.getEntradasByMonth = (req, res) => {
     include: [
       {
         model: Colaborador,
-        attributes: ['nombres', 'apellidos'],
+        attributes: ['nombres', 'apellidos',"documento","correo"],
         as: 'colaborador_asociation'
       }
     ]
@@ -404,3 +404,75 @@ exports.updateEntrada = async (req, res) => {
   }
 };
 
+exports.getEntradasByMonthEstadistica = (req, res) => {
+  const documento = req.params.documento;
+  const fecha = req.params.fecha;
+
+  const yearMonth = moment(fecha, 'YYYY-MM').format('YYYY-MM');
+
+  const startDate = moment(yearMonth, 'YYYY-MM').startOf('month').toISOString();
+  const endDate = moment(yearMonth, 'YYYY-MM').endOf('month').toISOString();
+
+  const whereClause = {
+    documento_colaborador: {
+      [Op.eq]: documento
+    },
+    fecha: {
+      [Op.between]: [startDate, endDate]
+    }
+  };
+
+  Entrada.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: Colaborador,
+        attributes: ['nombres', 'apellidos', 'documento', 'correo'],
+        as: 'colaborador_asociation'
+      }
+    ]
+  })
+    .then(entradas => {
+      if (entradas.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron entradas para el documento y el mes especificados' });
+      }
+
+      // Inicializar contadores
+      let totalAsistencias = 0;
+      let entradasPuntuales = 0;
+      let llegadasTarde = 0;
+      let totalHorasTrabajadas = 0;
+
+      // Calcular estadísticas
+      entradas.forEach(entrada => {
+        totalAsistencias++;
+
+        // Verificar si la entrada es puntual (antes de las 7:00)
+        const horaEntrada = moment(entrada.entrada, 'HH:mm:ss');
+        if (horaEntrada.isSameOrBefore(moment('07:00:00', 'HH:mm:ss'))) {
+          entradasPuntuales++;
+        } else {
+          llegadasTarde++;
+        }
+
+        // Calcular horas trabajadas si hay hora de salida
+        if (entrada.hora_salida) {
+          const horaSalida = moment(entrada.salida, 'HH:mm:ss');
+          const horasTrabajadas = horaSalida.diff(horaEntrada, 'hours', true); // Diferencia en horas
+          totalHorasTrabajadas += horasTrabajadas;
+        }
+      });
+
+      // Devolver estadísticas en la respuesta JSON
+      res.json({
+        totalAsistencias,
+        entradasPuntuales,
+        llegadasTarde,
+        totalHorasTrabajadas
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: 'Ocurrió un error al obtener las entradas por documento y mes' });
+    });
+}

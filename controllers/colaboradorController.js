@@ -1,9 +1,13 @@
 const Colaborador = require('../models/colaborador');
 const Genero = require('../models/Genero');
 const Cargo = require('../models/Cargo')
+const Ciudad = require('../models/Ciudad')
 const tipoSangre = require('../models/TipoSangre')
-const Area = require('../models/Area')
 const tipoContrato = require('../models/TipoContrato')
+const Eps = require('../models/eps')
+const Afp = require('../models/afp')
+const Portafolio = require('../models/portafolio')
+const EstadoCivil = require('../models/estadoCivil')
 const sequelize = require('../config/database')
 const nodemailer = require('nodemailer');
 const { Op } = require('sequelize');
@@ -35,7 +39,37 @@ exports.getAllColaboradores = (req, res) => {
         model: tipoContrato,
         attributes: ['tipoContrato'],
         as: 'tipoContrato_asociation'
+      },
+      {
+        model: Ciudad,
+        attributes: ['ciudad'],
+        as: 'ciudadNacimiento_asociation'
+      },
+      {
+        model: Ciudad,
+        attributes: ['ciudad'],
+        as: 'ciudadResidencia_asociation'
+      },
+      {
+        model: Eps,
+        attributes: ['eps'],
+        as: 'eps_asociation'
+      },
+      {
+        model: Afp,
+        attributes: ['afp'],
+        as: 'afp_asociation'
+      },{
+        model: Portafolio,
+        attributes: ['portafolio'],
+        as: 'portafolio_asociation'
+      },
+      {
+        model: EstadoCivil,
+        attributes: ['estadoCivil'],
+        as: 'estadoCivil_asociation'
       }
+
     ]
   })
     .then(colaboradores => {
@@ -340,18 +374,26 @@ exports.getAllColaboradoresByCargo = (req, res) => {
     attributes: [
       [sequelize.literal("SUM(CASE WHEN cargo = '1' THEN 1 ELSE 0 END)"), 'GerenteGeneral'],
       [sequelize.literal("SUM(CASE WHEN cargo = '2' THEN 1 ELSE 0 END)"), 'Administrador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '3' THEN 1 ELSE 0 END)"), 'AuxiliarAdministrativo'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '4' THEN 1 ELSE 0 END)"), 'CoordinadorLogístico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '5' THEN 1 ELSE 0 END)"), 'AuxiliarLogístico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '6' THEN 1 ELSE 0 END)"), 'ConductorEntregador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '7' THEN 1 ELSE 0 END)"), 'Contador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '8' THEN 1 ELSE 0 END)"), 'RevisorFiscal'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '9' THEN 1 ELSE 0 END)"), 'CoordinadordeVentas'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '10' THEN 1 ELSE 0 END)"), 'Asesorcomercial'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '11' THEN 1 ELSE 0 END)"), 'Aprendiz'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '12' THEN 1 ELSE 0 END)"), 'DesarrolladordeSoftware'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '14' THEN 1 ELSE 0 END)"), 'ServiciosCarnetización'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '15' THEN 1 ELSE 0 END)"), 'Psicologo']
+      [sequelize.literal("SUM(CASE WHEN cargo = '3' THEN 1 ELSE 0 END)"), 'CoordinadorDesarrolloHumano'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '4' THEN 1 ELSE 0 END)"), 'AnalistaDesarrolloHumano'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '5' THEN 1 ELSE 0 END)"), 'AuxiliarAdministrativo'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '6' THEN 1 ELSE 0 END)"), 'Contador'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '7' THEN 1 ELSE 0 END)"), 'RevisorFiscal'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '8' THEN 1 ELSE 0 END)"), 'DesarrolladorSoftware'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '9' THEN 1 ELSE 0 END)"), 'Practicante'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '10' THEN 1 ELSE 0 END)"), 'Coordinadorlogístico'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '11' THEN 1 ELSE 0 END)"), 'AdministradorDeflota'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '12' THEN 1 ELSE 0 END)"), 'ConductorEntregador'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '13' THEN 1 ELSE 0 END)"), 'Auxiliarlogístico'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '14' THEN 1 ELSE 0 END)"), 'AuxiliarDebodega'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '15' THEN 1 ELSE 0 END)"), 'Practicantelogístico'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '16' THEN 1 ELSE 0 END)"), 'SupervisorDeventas'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '17' THEN 1 ELSE 0 END)"), 'LíderSupernumerario'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '18' THEN 1 ELSE 0 END)"), 'AsesorComercialGeográfico'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '19' THEN 1 ELSE 0 END)"), 'AsesorComercialConsumolocal'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '20' THEN 1 ELSE 0 END)"), 'AsesorComercialMiniMercado'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '21' THEN 1 ELSE 0 END)"), 'AsesorComercialTeleVenta'],
+      [sequelize.literal("SUM(CASE WHEN cargo = '22' THEN 1 ELSE 0 END)"), 'Practicantemercadeocomercial']
     ]
   })
     .then(result => {

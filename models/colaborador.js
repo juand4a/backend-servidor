@@ -4,7 +4,11 @@ const Genero = require('./Genero');
 const Cargo = require('./Cargo');
 const TipoSangre=require('./TipoSangre')
 const TipoContrato=require('./TipoContrato')
-
+const Ciudad=require('./Ciudad')
+const Eps=require('./eps')
+const Afp=require('./afp')
+const Portafolio=require('./portafolio')
+const EstadoCivil=require('./estadoCivil')
 const Colaborador = sequelize.define('colaborador', {
   id: {
     type: DataTypes.INTEGER,
@@ -141,7 +145,10 @@ Colaborador.belongsTo(Genero, { foreignKey: 'genero', as: 'genero_asociation' })
 Colaborador.belongsTo(Cargo, { foreignKey: 'cargo', as: 'cargo_asociation' });
 Colaborador.belongsTo(TipoSangre, { foreignKey: 'grupoSanguineo', as: 'tipoSangre_asociation' });
 Colaborador.belongsTo(TipoContrato, { foreignKey: 'tipoContrato', as: 'tipoContrato_asociation' });
-
-
-
+Colaborador.belongsTo(Ciudad, { foreignKey: 'ciudadNacimiento', as: 'ciudadNacimiento_asociation' });
+Colaborador.belongsTo(Ciudad, { foreignKey: 'ciudadResidencia', as: 'ciudadResidencia_asociation' });
+Colaborador.belongsTo(Eps, { foreignKey: 'eps', as: 'eps_asociation' });
+Colaborador.belongsTo(Afp, { foreignKey: 'afp', as: 'afp_asociation' });
+Colaborador.belongsTo(Portafolio, { foreignKey: 'portafolioId', as: 'portafolio_asociation' });
+Colaborador.belongsTo(EstadoCivil, { foreignKey: 'estadoCivil', as: 'estadoCivil_asociation' });
 module.exports = Colaborador;

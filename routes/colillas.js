@@ -4,7 +4,6 @@ const colillas = require('../controllers/colillasController');
 
 // Rutas CRUD de colaborador
 router.post('/', colillas.createColillasForAllColaboradores);
-router.get('/', colillas.getOneColillaPerFechaPago);
-router.get('/colilla/', colillas.getOneColillaPerFechaPagoD);
+// router.get('/', colillas.getAllColillas);
 
 module.exports = router;

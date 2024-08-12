@@ -1,125 +1,10 @@
-const Colaborador = require('../models/colaborador');
-const Genero = require('../models/Genero');
-const Cargo = require('../models/Cargo')
-const Ciudad = require('../models/Ciudad')
-const tipoSangre = require('../models/TipoSangre')
-const tipoContrato = require('../models/TipoContrato')
-const Eps = require('../models/eps')
-const Afp = require('../models/afp')
-const Portafolio = require('../models/portafolio')
-const EstadoCivil = require('../models/estadoCivil')
-const sequelize = require('../config/database')
+// controllers/colaboradorController.js
+
+const colaboradorService = require('../service/colaboradorService');
+const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const { Op } = require('sequelize');
 
-// Resto de tu código de controlador aquí
-
- const bcrypt = require('bcrypt');
-
-// Obtener todos los colaboradores
-exports.getAllColaboradores = (req, res) => {
-  Colaborador.findAll({
-    include: [
-      {
-        model: Genero,
-        attributes: ['genero'],
-        as: 'genero_asociation'
-      },
-      {
-        model: Cargo,
-        attributes: ['cargo', 'area'],
-        as: 'cargo_asociation'
-      },
-      {
-        model: tipoSangre,
-        attributes: ['grupoSanguineo'],
-        as: 'tipoSangre_asociation'
-      },
-      {
-        model: tipoContrato,
-        attributes: ['tipoContrato'],
-        as: 'tipoContrato_asociation'
-      },
-      {
-        model: Ciudad,
-        attributes: ['ciudad'],
-        as: 'ciudadNacimiento_asociation'
-      },
-      {
-        model: Ciudad,
-        attributes: ['ciudad'],
-        as: 'ciudadResidencia_asociation'
-      },
-      {
-        model: Eps,
-        attributes: ['eps'],
-        as: 'eps_asociation'
-      },
-      {
-        model: Afp,
-        attributes: ['afp'],
-        as: 'afp_asociation'
-      },{
-        model: Portafolio,
-        attributes: ['portafolio'],
-        as: 'portafolio_asociation'
-      },
-      {
-        model: EstadoCivil,
-        attributes: ['estadoCivil'],
-        as: 'estadoCivil_asociation'
-      }
-
-    ]
-  })
-    .then(colaboradores => {
-      res.json(colaboradores);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener los colaboradores' });
-    });
-};
-
-// Obtener un colaborador por ID
-exports.getColaboradorById = (req, res) => {
-  const colaboradorId = req.params.id;
-
-  Colaborador.findByPk(colaboradorId, {
-    include: [
-      {
-        model: Genero,
-        attributes: ['genero'],
-        as: 'genero_asociation'
-      },
-      {
-        model: Cargo,
-        attributes: ['cargo'],
-        as: 'cargo_asociation'
-      },
-      {
-        model: tipoContrato,
-        attributes: ['tipoContrato'],
-        as: 'tipoContrato_asociation'
-      }
-
-    ]
-  })
-    .then(colaborador => {
-      if (!colaborador) {
-        return res.status(404).json({ error: 'Colaborador no encontrado' });
-      }
-      res.json(colaborador);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener el colaborador' });
-    });
-};
-
-
-// Crear un nuevo colaborador
-exports.createColaborador = (req, res) => {
+exports.createColaborador = async (req, res) => {
   const {
     documento,
     nombres,
@@ -135,7 +20,7 @@ exports.createColaborador = (req, res) => {
     direccionResidencia,
     tipoContrato,
     correo,
-    pw, // Cambiar el nombre de la variable para que no haya conflictos con la función
+    pw,
     estadoEmpleado,
     estadoCuenta,
     qrCodeUrl,
@@ -149,18 +34,20 @@ exports.createColaborador = (req, res) => {
     estatura,
     peso,
     celularCorporativo,
-    portafolioId
+    portafolioId,
+    serial_zebra,
+    serial_tablet,
+    placa,
   } = req.body;
 
-  // Generar un salt y hashear la contraseña
-  bcrypt.hash(pw, 10, (err, hashedPassword) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al crear el colaborador' });
-      return;
-    }
+  if (!pw) {
+    return res.status(400).json({ error: 'La contraseña es requerida' });
+  }
 
-    Colaborador.create({
+  try {
+    const hashedPassword = await bcrypt.hash(pw, 10);
+
+    const colaborador = await colaboradorService.createColaborador({
       documento,
       nombres,
       apellidos,
@@ -175,7 +62,7 @@ exports.createColaborador = (req, res) => {
       direccionResidencia,
       tipoContrato,
       correo,
-      pw: hashedPassword, // Usar la contraseña hasheada
+      pw: hashedPassword,
       estadoEmpleado,
       estadoCuenta,
       qrCodeUrl,
@@ -190,239 +77,151 @@ exports.createColaborador = (req, res) => {
       estatura,
       peso,
       celularCorporativo,
-      portafolioId
-
-    })
-      .then(colaborador => {
-        const password = pw; // Guarda la contraseña antes de enviar el correo
-
-        const transporter = nodemailer.createTransport({
-          service: 'Gmail', // Puedes usar otro servicio o configurar uno propio
-          auth: {
-            user: 'jdlopez2013@misena.edu.co', // Tu dirección de correo
-            pass: '3054576150Ju' // Tu contraseña
-          }
-        });
-
-        const mailOptions = {
-          from: 'jdlopez2013@misena.edu.co',
-          to: colaborador.correo, // Correo del colaborador
-          subject: 'Bienvenido a la empresa red de marcas,ya eres parte de la familia',
-          text: `Usuario creado. Tu contraseña es: ${password} y ingresas con el correo que es ${colaborador.correo}`
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error('Error al enviar el correo: ' + error);
-          } else {
-            console.log('Correo enviado: ' + info.response);
-          }
-        });
-
-        res.json({success: true,colaborador});
-      })
-      .catch(err => {
-        console.error(err);
-        res.status(500).json({ error: 'Ocurrió un error al crear el colaborador' });
-      });
-  });
-};
-
-// Actualizar un colaborador
-exports.updateColaborador = (req, res) => {
-  const documentop = req.params.documento_colaborador
-  const { nombres,
-    apellidos,
-    genero,
-    celular,
-    fechaNacimiento,
-    fechaIngreso,
-    salario,
-    ciudadNacimiento,
-    ciudadResidencia,
-    direccionResidencia,
-    correo,
-    eps,
-    afp,
-    grupoSanguineo,
-    estrato,
-    estadoCivil,
-    telefonoFijo,
-    estatura,
-    peso } = req.body;
-
-  Colaborador.update({nombres,
-    apellidos,
-    genero,
-    celular,
-    fechaNacimiento,
-    fechaIngreso,
-    salario,
-    ciudadNacimiento,
-    ciudadResidencia,
-    direccionResidencia,
-    correo,
-    eps,
-    afp,
-    grupoSanguineo,
-    estrato,
-    estadoCivil,
-    telefonoFijo,
-    estatura,
-    peso }, { where: { documento: documentop, } })
-    .then(result => {
-      if (result[0] === 0) {
-        return res.status(404).json({ error: 'Colaborador no encontrado' });
-      }
-      res.json({ success: true });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
+      portafolioId,
+      serial_zebra,
+      serial_tablet,
+      placa,
     });
 
+    // Envía un correo de bienvenida (descomentar y configurar con variables de entorno)
+    // const transporter = nodemailer.createTransport({
+    //   service: 'Gmail',
+    //   auth: {
+    //     user: process.env.EMAIL_USER,
+    //     pass: process.env.EMAIL_PASS,
+    //   },
+    // });
+
+    // const mailOptions = {
+    //   from: process.env.EMAIL_USER,
+    //   to: colaborador.correo,
+    //   subject: 'Bienvenido a la empresa',
+    //   text: `Usuario creado. Su documento de identidad es la contraseña de acceso.`,
+    // };
+
+    // await transporter.sendMail(mailOptions);
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'Colaborador creado correctamente',
+      data: colaborador,
+    });
+  } catch (error) {
+    console.error('Error al crear el colaborador:', error);
+    res.status(500).json({ error: 'Ocurrió un error al crear el colaborador' });
+  }
 };
 
-// Eliminar un colaborador
-exports.deleteColaborador = (req, res) => {
+exports.getAllColaboradores = async (req, res) => {
+  try {
+    const colaboradores = await colaboradorService.getAllColaboradores();
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'Colaboradores obtenidos correctamente',
+      data: colaboradores,
+    });
+  } catch (error) {
+    console.error('Error al obtener colaboradores:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener los colaboradores' });
+  }
+};
+
+exports.getColaboradorById = async (req, res) => {
   const colaboradorId = req.params.id;
-
-  Colaborador.destroy({ where: { id: colaboradorId } })
-    .then(result => {
-      if (result === 0) {
-        return res.status(404).json({ error: 'Colaborador no encontrado' });
-      }
-      res.json({ message: 'Colaborador eliminado correctamente' });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al eliminar el colaborador' });
+  try {
+    const colaborador = await colaboradorService.getColaboradorById(colaboradorId);
+    if (!colaborador) {
+      return res.status(404).json({ error: 'Colaborador no encontrado' });
+    }
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'Colaborador encontrado correctamente',
+      data: colaborador,
     });
-};
-
-exports.getAllColaboradoresByGenero = (req, res) => {
-  const cargo = req.params.cargo; // Supongamos que obtienes el valor de cargo desde la solicitud.
-
-  // Define un objeto que contiene la lógica de filtro basada en el valor de cargo.
-  let whereClause = {};
-
-  if (cargo === '8' || cargo === '1' || cargo === '2' || cargo === '4'|| cargo === '3') {
-    whereClause = {};
-  } else if (cargo === '16') {
-    whereClause = {
-      cargo: { [Op.or]: ['17', '18','19', '20','21', '22'] }
-    };
-  } else if (cargo === '10') {
-    whereClause = {
-      cargo: { [Op.or]: ['11', '12','13', '14','15'] }
-    };
+  } catch (error) {
+    console.error('Error al obtener colaborador:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener el colaborador' });
   }
-
-  Colaborador.findAll({
-    where: whereClause,
-    attributes: [
-      [sequelize.literal("SUM(CASE WHEN genero = '1' THEN 1 ELSE 0 END)"), 'masculino'],
-      [sequelize.literal("SUM(CASE WHEN genero = '2' THEN 1 ELSE 0 END)"), 'femenino'],
-      [sequelize.literal("SUM(CASE WHEN genero = '3' THEN 1 ELSE 0 END)"), 'lgbtq']
-    ]
-  })
-    .then(result => {
-      const totals = result[0].dataValues;
-      res.json(totals);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener los totales de colaboradores por género' });
-    });
 };
 
+exports.updateColaborador = async (req, res) => {
+  const documentop = req.params.documento_colaborador;
+  const colaboradorData = req.body;
 
-exports.getAllColaboradoresTotal = (req, res) => {
-  const cargo = req.params.cargo; // Supongamos que obtienes el valor de cargo desde la solicitud.
-
-  // Define un objeto que contiene la lógica de filtro basada en el valor de cargo.
-  let whereClause = {};
-//admin
-if (cargo === '8' || cargo === '1' || cargo === '2' || cargo === '4'|| cargo === '3') {
-  whereClause = {};
-    //ventas
-  } else if (cargo === '16') {
-    whereClause = {
-      cargo: { [Op.or]: ['17', '18','19', '20','21', '22'] }
-    };
-    //logistico
-  } else if (cargo === '10') {
-    whereClause = {
-      cargo: { [Op.or]: ['11', '12','13', '14','15'] }
-    };
+  try {
+    const updatedRows = await colaboradorService.updateColaborador(documentop, colaboradorData);
+    if (updatedRows === 0) {
+      return res.status(404).json({ error: 'Colaborador no encontrado' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error al actualizar colaborador:', error);
+    res.status(500).json({ error: 'Ocurrió un error al actualizar el colaborador' });
   }
-
-  Colaborador.count({
-    where: whereClause
-  })
-    .then(total => {
-      res.json({ total });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener el total de colaboradores con la condición de cargo' });
-    });
 };
 
-exports.getAllColaboradoresByCargo = (req, res) => {
-  Colaborador.findAll({
-    attributes: [
-      [sequelize.literal("SUM(CASE WHEN cargo = '1' THEN 1 ELSE 0 END)"), 'GerenteGeneral'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '2' THEN 1 ELSE 0 END)"), 'Administrador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '3' THEN 1 ELSE 0 END)"), 'CoordinadorDesarrolloHumano'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '4' THEN 1 ELSE 0 END)"), 'AnalistaDesarrolloHumano'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '5' THEN 1 ELSE 0 END)"), 'AuxiliarAdministrativo'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '6' THEN 1 ELSE 0 END)"), 'Contador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '7' THEN 1 ELSE 0 END)"), 'RevisorFiscal'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '8' THEN 1 ELSE 0 END)"), 'DesarrolladorSoftware'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '9' THEN 1 ELSE 0 END)"), 'Practicante'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '10' THEN 1 ELSE 0 END)"), 'Coordinadorlogístico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '11' THEN 1 ELSE 0 END)"), 'AdministradorDeflota'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '12' THEN 1 ELSE 0 END)"), 'ConductorEntregador'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '13' THEN 1 ELSE 0 END)"), 'Auxiliarlogístico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '14' THEN 1 ELSE 0 END)"), 'AuxiliarDebodega'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '15' THEN 1 ELSE 0 END)"), 'Practicantelogístico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '16' THEN 1 ELSE 0 END)"), 'SupervisorDeventas'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '17' THEN 1 ELSE 0 END)"), 'LíderSupernumerario'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '18' THEN 1 ELSE 0 END)"), 'AsesorComercialGeográfico'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '19' THEN 1 ELSE 0 END)"), 'AsesorComercialConsumolocal'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '20' THEN 1 ELSE 0 END)"), 'AsesorComercialMiniMercado'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '21' THEN 1 ELSE 0 END)"), 'AsesorComercialTeleVenta'],
-      [sequelize.literal("SUM(CASE WHEN cargo = '22' THEN 1 ELSE 0 END)"), 'Practicantemercadeocomercial']
-    ]
-  })
-    .then(result => {
-      const totals = result[0].dataValues;
-      res.json(totals);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener los totales por género' });
-    });
+exports.deleteColaborador = async (req, res) => {
+  const colaboradorId = req.params.id;
+  try {
+    const deletedRows = await colaboradorService.deleteColaborador(colaboradorId);
+    if (deletedRows === 0) {
+      return res.status(404).json({ error: 'Colaborador no encontrado' });
+    }
+    res.json({ message: 'Colaborador eliminado correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar colaborador:', error);
+    res.status(500).json({ error: 'Ocurrió un error al eliminar el colaborador' });
+  }
 };
 
-exports.getAllColaboradoresByAprendiz = (req, res) => {
-  Colaborador.findAll({
-    attributes: [
-      [sequelize.literal("SUM(CASE WHEN cargo = '11' THEN 1 ELSE 0 END)"), 'Aprendiz']
-    ]
-  })
-    .then(result => {
-      const totals = result[0].dataValues;
-      res.json(totals);
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).json({ error: 'Ocurrió un error al obtener los totales por género' });
+exports.getAllColaboradoresByGenero = async (req, res) => {
+  const cargo = req.params.cargo;
+
+  try {
+    const totals = await colaboradorService.getAllColaboradoresByGenero(cargo);
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'Colaboradores obtenidos por género',
+      data: totals,
     });
+  } catch (error) {
+    console.error('Error al obtener colaboradores por género:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener los colaboradores por género' });
+  }
 };
 
+exports.getAllColaboradoresTotal = async (req, res) => {
+  const cargo = req.params.cargo;
 
+  try {
+    const total = await colaboradorService.getAllColaboradoresTotal(cargo);
+    res.json({ total });
+  } catch (error) {
+    console.error('Error al obtener total de colaboradores:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener el total de colaboradores' });
+  }
+};
 
+exports.getAllColaboradoresByCargo = async (req, res) => {
+  try {
+    const totals = await colaboradorService.getAllColaboradoresByCargo();
+    res.json(totals);
+  } catch (error) {
+    console.error('Error al obtener colaboradores por cargo:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener los colaboradores por cargo' });
+  }
+};
 
-
+exports.getAllColaboradoresByAprendiz = async (req, res) => {
+  try {
+    const totals = await colaboradorService.getAllColaboradoresByAprendiz();
+    res.json(totals);
+  } catch (error) {
+    console.error('Error al obtener colaboradores por aprendiz:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener los colaboradores por aprendiz' });
+  }
+};

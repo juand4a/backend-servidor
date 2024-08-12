@@ -9,7 +9,7 @@ const Colillas = sequelize.define('colillaspagocolaborador', {
   },
   docid: {
     type: DataTypes.INTEGER(11),
-    allowNull: false
+    allowNull: true
   ,
   },
   fechaPago: { 

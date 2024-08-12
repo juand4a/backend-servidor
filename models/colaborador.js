@@ -2,13 +2,13 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Genero = require('./Genero');
 const Cargo = require('./Cargo');
-const TipoSangre=require('./TipoSangre')
-const TipoContrato=require('./TipoContrato')
-const Ciudad=require('./Ciudad')
-const Eps=require('./eps')
-const Afp=require('./afp')
-const Portafolio=require('./portafolio')
-const EstadoCivil=require('./estadoCivil')
+const TipoSangre = require('./TipoSangre')
+const TipoContrato = require('./TipoContrato')
+const Ciudad = require('./Ciudad')
+const Eps = require('./eps')
+const Afp = require('./afp')
+const Portafolio = require('./portafolio')
+const EstadoCivil = require('./estadoCivil')
 const Colaborador = sequelize.define('colaborador', {
   id: {
     type: DataTypes.INTEGER,
@@ -89,7 +89,7 @@ const Colaborador = sequelize.define('colaborador', {
     defaultValue: null,
   },
   fotoUrl: {
-    type: DataTypes.STRING(200),
+    type: DataTypes.STRING,
     defaultValue: null,
   },
   jefeInmediato: {
@@ -136,7 +136,19 @@ const Colaborador = sequelize.define('colaborador', {
     type: DataTypes.INTEGER(2),
     defaultValue: null,
   },
-  
+  serial_zebra: {
+    type: DataTypes.STRING(17),
+    defaultValue: null,
+  },
+  serial_tablet: {
+    type: DataTypes.STRING(17),
+    defaultValue: null,
+  },
+  placa: {
+    type: DataTypes.STRING(10),
+    defaultValue: null,
+  },
+
 }, {
   tableName: 'colaborador',
   timestamps: false,

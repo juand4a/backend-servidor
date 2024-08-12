@@ -51,10 +51,29 @@ const Entrada = sequelize.define('entrada', {
     type: DataTypes.STRING,
     defaultValue: null,
   },
+ latitud_salida: {
+    type: DataTypes.DECIMAL(9,6),
+    defaultValue: null,
+  },
+  longitud_salida: {
+    type: DataTypes.DECIMAL(9,6),
+    defaultValue: null,
+  },
   foto_entrada: {
     type: DataTypes.STRING,
     defaultValue: null,
   },
+  latitud_entrada: {
+    type: DataTypes.DECIMAL(9,6),
+    defaultValue: null,
+  },
+  longitud_entrada: {
+    type: DataTypes.DECIMAL(9,6),
+    defaultValue: null,
+  },kilometraje_salida: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+  }
 
 }, {
   tableName: 'entrada',

@@ -1,6 +1,5 @@
 const Ciudad=require('../models/Ciudad')
 
-
 exports.getAllCiudad = (req, res) => {
   Ciudad.findAll()
     
@@ -11,4 +10,5 @@ exports.getAllCiudad = (req, res) => {
         console.error(err);
         res.status(500).json({ error: 'Ocurrió un error al obtener las entradas' });
       });
+      
   };

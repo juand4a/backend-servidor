@@ -30,7 +30,7 @@ const Anuncios = sequelize.define('anuncios', {
   }, 
    documento_colaborador: {
     type: DataTypes.STRING(11),
-    allowNull: false,
+    allowNull: true,
   },
  
 }, {

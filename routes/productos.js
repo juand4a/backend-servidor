@@ -10,5 +10,7 @@ router.get('/buscar-puntos/:documento', productosController.getPuntosSumadosByDo
 router.get('/buscar-solicitudes/:documento', productosController.getAllRequesByDocument);
 router.post('/', productosController.createProducst);
 router.put('/:documento_colaborador/:solicitudId',productosController.updateR)
+router.put('/:id',productosController.updateProductos)
+
 router.post('/solicitud', productosController.createRequest);
 module.exports = router;

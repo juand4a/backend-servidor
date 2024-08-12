@@ -2,59 +2,42 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors'); 
-const serverless = require('serverless-http');
-
+const helmet = require('helmet');
+const compression = require('compression');
+const { sessionSecret } = require('./config');
 
 const app = express();
-const port = 3000;
 
-// Configuración de bodyParser para analizar los cuerpos de las solicitudes
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '200mb' }));
-app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
-
-// Configuración de express-session
+// Middlewares
+app.use(helmet());
+app.use(compression());
+app.use(bodyParser.json({ limit: '300mb' }));
+app.use(bodyParser.urlencoded({ limit: '300mb', extended: true }));
 app.use(session({
-  secret: 'mi-secreto',
+  secret: sessionSecret,
   resave: true,
   saveUninitialized: true
 }));
-
-// Habilitar CORS
 app.use(cors()); 
 
 // Rutas
-const colaboradorRoutes = require('./routes/colaborador');
-const loginRoutes = require('./routes/login');
-const entradaRoutes=require('./routes/asistencia');
-const foreingkeys=require('./routes/foreingkeys');
-const productos=require('./routes/productos')
-const anuncios=require('./routes/anuncios')
-const colillas=require('./routes/colillas')
-const permisos=require('./routes/permisos')
-const capacitacion=require('./routes/capacitacion')
-const likesComentarios=require('./routes/comentariosLikes')
-const incapacidad=require('./routes/incapacidad')
-const encuestaVehiculo=require('./routes/encuestaVehiculo')
+const apiRouter = express.Router();
+apiRouter.use('/colaborador', require('./routes/colaborador'));
+apiRouter.use('/login', require('./routes/login'));
+apiRouter.use('/entrada', require('./routes/asistencia'));
+apiRouter.use('/foreingkey', require('./routes/foreingkeys'));
+apiRouter.use('/anuncios', require('./routes/anuncios'));
+apiRouter.use('/devolucion', require('./routes/devolucion'));
+apiRouter.use('/encuesta', require('./routes/encuestaVehiculo'));
+// (y más rutas...)
 
-app.get("/",(req,res)=>{
-  res.status(5).json({mensaje:"hola"})
-})
-app.use('/entrada', entradaRoutes)
-app.use('/colaborador', colaboradorRoutes);
-app.use('/login', loginRoutes);
-app.use('/foreingkey',foreingkeys)
-app.use('/productos',productos)
-app.use('/anuncio',anuncios)
-app.use('/colilla',colillas)
-app.use('/permisos',permisos)
-app.use('/capacitacion',capacitacion)
-app.use('/likesComentarios',likesComentarios)
-app.use('/incapacidad',incapacidad)
-app.use('/vehiculo',encuestaVehiculo)
-// Inicio del servidor
-app.listen(port, () => {
-  console.log(`Servidor en funcionamiento en el puerto ${port}`);
+app.use('/api', apiRouter);
+
+app.get("/", (req, res) => {
+  res.status(200).json({ mensaje: "hola" });
 });
 
-// module.exports.handler = serverless(app);
+// Manejo de errores
+app.use(require('./middlewares/ErrorMiddle'));
+
+module.exports = app;

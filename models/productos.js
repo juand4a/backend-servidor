@@ -25,7 +25,11 @@ const Productos = sequelize.define('productos', {
     allowNull: false,
   },
   imagen_url: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  estado: {
+    type: DataTypes.STRING(11),
     allowNull: false,
   },
 

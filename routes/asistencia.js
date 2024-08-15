@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const entradaController = require('../controllers/entradaController');
+const  upload  = require('../middlewares/multerConfig'); // Asegúrate de actualizar la ruta al archivo de configuración de multer
+const  uploadS  = require('../middlewares/multerConfigSalida'); // Asegúrate de actualizar la ruta al archivo de configuración de multer
 
 // Rutas CRUD de entrada
 router.get('/', entradaController.getAllEntrada); // Obtener todas las entradas
@@ -19,7 +21,7 @@ router.get('/cargo/:fecha/:cargo', entradaController.getEntrada); // Obtener ent
 router.get('/:fecha', entradaController.getEntradaByFecha); // Obtener entradas por fecha (esta ruta es la más general y debería ir al final)
 
 // Rutas para crear y actualizar entradas
-router.post('/', entradaController.createEntrada); // Crear una nueva entrada
-router.put('/actualizar/:documento/:fecha', entradaController.updateEntrada); // Actualizar una entrada por documento y fecha
+router.post('/', upload.single('foto_entrada'), entradaController.createEntrada); // Asegúrate de que el nombre del campo ('foto_entrada') coincida con el nombre del campo en el formulario de carga
+router.put('/actualizar/:documento_colaborador/:fecha', uploadS.single('foto_salida'), entradaController.updateEntrada); // Actualizar una entrada por documento y fecha
 
 module.exports = router;

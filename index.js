@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const { sessionSecret } = require('./config');
+require('dotenv').config();
 
 const app = express();
 

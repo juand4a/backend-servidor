@@ -4,6 +4,12 @@ const Entrada = require('../models/entrada');
 const Colaborador = require('../models/colaborador');
 const { Op, literal } = require('sequelize');
 const moment = require('moment');
+const PartesEncuestaVehiculo=require("./../models/partesencuestavehiculo")
+const HerramientasEncuestaVehiculo=require("./../models/herramientasencuestavehiculo")
+const NivelesEncuestaVehiculo=require("./../models/nivelesencuestavehiculo")
+const PapelesEncuestaVehiculo=require("./../models/papelesencuestavehiculo")
+const EncuestaVehiculo=require("./../models/encuestavehiculo");
+const Cargo = require('../models/Cargo');
 
 const getAllEntradas = async () => {
   return await Entrada.findAll({
@@ -141,63 +147,80 @@ const getEntrada = async (fecha, cargo) => {
 };
 
 const createEntrada = async (entradaData, encuestasData) => {
-  const nuevaEntrada = await Entrada.create(entradaData);
+  // Validar que los datos necesarios están presentes
+  if (!entradaData || !encuestasData) {
+    throw new Error('Faltan datos necesarios para crear la entrada.');
+  }
 
-  const {
-    partesEncuestaVehiculo,
-    papelesEncuestaVehiculo,
-    herramientasEncuestaVehiculo,
-    nivelesEncuestaVehiculo,
-  } = encuestasData;
+  try {
+    const nuevaEntrada = await Entrada.create(entradaData);
 
-  const partesEncuestaGuardadas = await PartesEncuestaVehiculo.bulkCreate(
-    partesEncuestaVehiculo.map((partes) => ({
-      idEncuesta: nuevaEntrada.id,
-      idParteVehiculo: partes.idParteVehiculo,
-      estado: partes.estado,
-    }))
-  );
+    const {
+      partesEncuestaVehiculo = [],
+      papelesEncuestaVehiculo = [],
+      herramientasEncuestaVehiculo = [],
+      nivelesEncuestaVehiculo = [],
+    } = encuestasData;
 
-  const herramientasEncuestaGuardadas = await HerramientasEncuestaVehiculo.bulkCreate(
-    herramientasEncuestaVehiculo.map((herramienta) => ({
-      idEncuesta: nuevaEntrada.id,
-      idHerramientaVehiculo: herramienta.idHerramientaVehiculo,
-      verificado: herramienta.verificado,
-    }))
-  );
+    // Validar que tenemos arrays antes de proceder
+    if (!Array.isArray(partesEncuestaVehiculo) || !Array.isArray(papelesEncuestaVehiculo) ||
+        !Array.isArray(herramientasEncuestaVehiculo) || !Array.isArray(nivelesEncuestaVehiculo)) {
+      throw new Error('Uno o más de los datos de encuesta no son arrays válidos.');
+    }
 
-  const nivelesEncuestaGuardadas = await NivelesEncuestaVehiculo.bulkCreate(
-    nivelesEncuestaVehiculo.map((herramienta) => ({
-      idEncuesta: nuevaEntrada.id,
-      idParteNivelVehiculo: herramienta.idParteNivelVehiculo,
-    }))
-  );
+    const partesEncuestaGuardadas = await PartesEncuestaVehiculo.bulkCreate(
+      partesEncuestaVehiculo.map(partes => ({
+        idEncuesta: nuevaEntrada.id,
+        idParteVehiculo: partes.idParteVehiculo,
+        estado: partes.estado,
+      }))
+    );
 
-  const papelesEncuestaGuardados = await PapelesEncuestaVehiculo.bulkCreate(
-    papelesEncuestaVehiculo.map((papeles) => ({
-      idEncuesta: nuevaEntrada.id,
-      idPapelVehiculo: papeles.idPapelVehiculo,
-      poseeDocumento: papeles.poseeDocumento,
-    }))
-  );
+    const herramientasEncuestaGuardadas = await HerramientasEncuestaVehiculo.bulkCreate(
+      herramientasEncuestaVehiculo.map(herramienta => ({
+        idEncuesta: nuevaEntrada.id,
+        idHerramientaVehiculo: herramienta.idHerramientaVehiculo,
+        verificado: herramienta.verificado,
+      }))
+    );
 
-  const EncuestaGuardados = await EncuestaVehiculo.create({
-    idColaborador: nuevaEntrada.documento_colaborador,
-    placa: nuevaEntrada.placa,
-    observaciones: 'N/A',
-    kilometraje: nuevaEntrada.kilometraje,
-    fecha: nuevaEntrada.fecha,
-  });
+    const nivelesEncuestaGuardadas = await NivelesEncuestaVehiculo.bulkCreate(
+      nivelesEncuestaVehiculo.map(herramienta => ({
+        idEncuesta: nuevaEntrada.id,
+        idParteNivelVehiculo: herramienta.idParteNivelVehiculo,
+      }))
+    );
 
-  return {
-    nuevaEntrada,
-    partesEncuestaGuardadas,
-    herramientasEncuestaGuardadas,
-    nivelesEncuestaGuardadas,
-    papelesEncuestaGuardados,
-    EncuestaGuardados,
-  };
+    const papelesEncuestaGuardados = await PapelesEncuestaVehiculo.bulkCreate(
+      papelesEncuestaVehiculo.map(papeles => ({
+        idEncuesta: nuevaEntrada.id,
+        idPapelVehiculo: papeles.idPapelVehiculo,
+        poseeDocumento: papeles.poseeDocumento,
+      }))
+    );
+
+    const EncuestaGuardados = await EncuestaVehiculo.create({
+      idColaborador: nuevaEntrada.documento_colaborador,
+      placa: nuevaEntrada.placa,
+      observaciones: 'N/A',
+      kilometraje: nuevaEntrada.kilometraje,
+      fecha: nuevaEntrada.fecha,
+    });
+
+    return {
+      nuevaEntrada,
+      partesEncuestaGuardadas,
+      herramientasEncuestaGuardadas,
+      nivelesEncuestaGuardadas,
+      papelesEncuestaGuardados,
+      EncuestaGuardados,
+    };
+  } catch (error) {
+    console.error('Error al crear la entrada y sus encuestas:', error);
+    throw new Error('Error al procesar la solicitud.');
+  }
 };
+
 
 const updateEntrada = async (documento, fecha, updateData) => {
   const fechaISO8601 = moment(fecha, 'YYYY-MM-DD').toISOString();

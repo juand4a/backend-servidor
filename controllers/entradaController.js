@@ -84,7 +84,15 @@ exports.getEntrada = async (req, res) => {
 
 exports.createEntrada = async (req, res) => {
   try {
-    const entradaData = req.body;
+    const { documento_colaborador } = req.body;
+    // Determinar si se debe usar la URL de S3 o el camino local
+    const fotoEntradaPath = req.file.location || req.file.path; // Usa 'location' para producción con S3 y 'path' para desarrollo
+
+    const entradaData = {
+      ...req.body,
+      foto_entrada: fotoEntradaPath
+    };
+
     const encuestasData = {
       partesEncuestaVehiculo: entradaData.partesEncuestaVehiculo,
       papelesEncuestaVehiculo: entradaData.papelesEncuestaVehiculo,
@@ -96,11 +104,8 @@ exports.createEntrada = async (req, res) => {
     res.json({
       success: true,
       entradaId: result.nuevaEntrada.id,
-      partesEncuestaGuardadas: result.partesEncuestaGuardadas,
-      papelesEncuestaGuardados: result.papelesEncuestaGuardados,
-      herramientasEncuestaGuardadas: result.herramientasEncuestaGuardadas,
-      nivelesEncuestaGuardadas: result.nivelesEncuestaGuardadas,
-      EncuestaGuardados: result.EncuestaGuardados,
+      foto_entrada: entradaData.foto_entrada,
+      // Otros campos si es necesario
     });
   } catch (error) {
     console.error('Error al guardar la entrada:', error);
@@ -108,16 +113,28 @@ exports.createEntrada = async (req, res) => {
   }
 };
 
+
 exports.updateEntrada = async (req, res) => {
   try {
-    const { documento, fecha } = req.params;
-    const updateData = req.body;
+    const { documento_colaborador, fecha } = req.params;
 
-    const updatedRows = await entradaService.updateEntrada(documento, fecha, updateData);
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se proporcionó una imagen de salida' });
+    }
+
+    const fotoEntradaPath = req.file.location || req.file.path; // Usa 'location' para producción con S3 y 'path' para desarrollo
+
+    const updateData = {
+      ...req.body,
+      foto_salida: fotoEntradaPath
+    };
+
+    const updatedRows = await entradaService.updateEntrada(documento_colaborador, fecha, updateData);
 
     if (updatedRows === 0) {
       return res.status(404).json({ error: 'Colaborador no encontrado o la fecha no coincide' });
     }
+
     res.json({ success: true });
   } catch (err) {
     console.error('Error al actualizar la entrada:', err);

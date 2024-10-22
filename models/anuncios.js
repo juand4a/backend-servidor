@@ -10,15 +10,15 @@ const Anuncios = sequelize.define('anuncios', {
   },
   titulo: {
     type: DataTypes.STRING(100),
-    allowNull: false,
+    allowNull: true,
   },
   contenido: {
     type: DataTypes.STRING(250),
-    allowNull: false,
+    allowNull: true,
   },
   fechaPublicacion: {
     type: DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
   },
   foto: {
     type: DataTypes.STRING,
@@ -26,7 +26,7 @@ const Anuncios = sequelize.define('anuncios', {
   },
   tipoAnuncio: {
     type: DataTypes.STRING(25),
-    allowNull: false,
+    allowNull: true,
   }, 
    documento_colaborador: {
     type: DataTypes.STRING(11),

@@ -1,6 +1,6 @@
 // controllers/permisoController.js
 
-const permisoService = require('../services/permisoService');
+const permisoService = require('./../service/permisoService');
 
 exports.createPermiso = async (req, res) => {
   try {
@@ -30,11 +30,19 @@ exports.updatePermisos = async (req, res) => {
 
 exports.getAllPermisos = async (req, res) => {
   try {
-    const permisos = await permisoService.getAllPermisos(req.params.cargo);
+    const cargo = parseInt(req.params.cargo, 10); // Convertir el parámetro cargo a número
+    const permisos = await permisoService.getAllPermisosByCargo(cargo);
+
+    // Si el array de permisos está vacío y el cargo no es permitido
+    if (permisos.length === 0 && ![1, 2, 3, 4, 8, 10, 16].includes(cargo)) {
+      return res.status(403).json({ error: 'No tiene permiso para ver estos datos.' });
+    }
+
+    // Devolver los permisos
     res.json(permisos);
   } catch (error) {
     console.error('Error al obtener los permisos:', error);
-    res.status(500).json({ error: 'Ocurrió un error al obtener las entradas' });
+    res.status(500).json({ error: 'Ocurrió un error al obtener las entradas.' });
   }
 };
 
@@ -55,5 +63,27 @@ exports.getAllPermisosCount = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener el conteo de permisos:', error);
     res.status(500).json({ error: 'Ocurrió un error al obtener las entradas' });
+  }
+};
+
+exports.getPermisosPendientes = async (req, res) => {
+  try {
+    const permisosPendientes = await permisoService.getPermisosPendientes();
+
+    if (permisosPendientes.length === 0) {
+      return res.status(200).json({
+        message: 'No hay permisos pendientes',
+        permisos: []
+      });
+    }
+
+    // Si hay permisos pendientes, devolverlos
+    res.json({
+      message: 'Permisos pendientes encontrados',
+      permisos: permisosPendientes,
+    });
+  } catch (error) {
+    console.error('Error al obtener permisos pendientes:', error);
+    res.status(500).json({ error: 'Ocurrió un error al obtener los permisos pendientes' });
   }
 };

@@ -56,40 +56,132 @@ const updatePermisos = async (documento, id, cargo, updateData) => {
   return updatedRows;
 };
 
-const getAllPermisos = async (cargo) => {
-  const whereClause = getWhereClauseByCargo(cargo);
+const getAllPermisosByCargo = async (cargo) => {
+  let whereClause = {};
 
-  return await Permisos.findAll({
+  // Define el filtro según el cargo
+  if ([1, 2, 3, 4, 8].includes(cargo)) {
+    // Mostrar todos los permisos
+    whereClause = {};
+  } else if (cargo === 10) {
+    whereClause = {
+      '$colaborador_asociation.cargo_asociation.cargo$': [11, 12, 13, 14, 15],
+    };
+  } else if (cargo === 16) {
+    whereClause = {
+      '$colaborador_asociation.cargo_asociation.cargo$': [17, 18, 19, 20, 21, 22],
+    };
+  } else {
+    return [];
+  }
+
+  // Obtiene los permisos con los detalles del colaborador
+  const permisos = await Permisos.findAll({
     where: whereClause,
     include: [
       {
         model: Colaborador,
-        attributes: ['nombres', 'apellidos'],
+        attributes: ['nombres', 'apellidos', 'jefeInmediato'],
         as: 'colaborador_asociation',
         include: [
           {
             model: Cargo,
             attributes: ['cargo'],
-            as: 'cargo_asociation'
-          }
-        ]
-      }
-    ]
+            as: 'cargo_asociation',
+          },
+        ],
+      },
+    ],
   });
+
+  // Busca los detalles del jefe para cada permiso
+  const permisosConDetallesJefe = await Promise.all(permisos.map(async (permiso) => {
+    // Verificar si colaborador_asociation y jefeInmediato existen
+    const jefeDocumento = permiso.colaborador_asociation?.jefeInmediato;
+
+    if (!jefeDocumento) {
+      return {
+        ...permiso.toJSON(),
+        jefeDetalles: null
+      };
+    }
+
+    const jefe = await Colaborador.findOne({
+      where: { documento: jefeDocumento },
+      attributes: ['nombres', 'apellidos'],
+      include: [
+        {
+          model: Cargo,
+          attributes: ['cargo'],
+          as: 'cargo_asociation'
+        }
+      ]
+    });
+
+    return {
+      ...permiso.toJSON(),
+      jefeDetalles: jefe ? {
+        nombres: jefe.nombres,
+        apellidos: jefe.apellidos,
+        cargo: jefe.cargo_asociation ? jefe.cargo_asociation.cargo : null,
+      } : null
+    };
+  }));
+
+  return permisosConDetallesJefe;
 };
 
 const getAllPermisosByColaborador = async (documento) => {
-  return await Permisos.findAll({
+  // Obtén los permisos del colaborador
+  const permisos = await Permisos.findAll({
     where: { documento_colaborador: documento },
     include: [
       {
         model: Colaborador,
-        attributes: ['nombres', 'apellidos'],
+        attributes: ['nombres', 'apellidos', 'jefeInmediato'],
         as: 'colaborador_asociation'
       }
     ]
   });
+
+  // Itera sobre cada permiso para obtener detalles del jefe
+  const permisosConDetallesJefe = await Promise.all(permisos.map(async (permiso) => {
+    // Verifica si existe jefeInmediato para el colaborador asociado
+    const jefeDocumento = permiso.colaborador_asociation?.jefeInmediato;
+
+    if (!jefeDocumento) {
+      return {
+        ...permiso.toJSON(),
+        jefeDetalles: null
+      };
+    }
+
+    // Busca los detalles del jefe
+    const jefe = await Colaborador.findOne({
+      where: { documento: jefeDocumento },
+      attributes: ['nombres', 'apellidos'],
+      include: [
+        {
+          model: Cargo,
+          attributes: ['cargo'],
+          as: 'cargo_asociation'
+        }
+      ]
+    });
+
+    return {
+      ...permiso.toJSON(),
+      jefeDetalles: jefe ? {
+        nombres: jefe.nombres,
+        apellidos: jefe.apellidos,
+        cargo: jefe.cargo_asociation ? jefe.cargo_asociation.cargo : null,
+      } : null
+    };
+  }));
+
+  return permisosConDetallesJefe;
 };
+
 
 const getAllPermisosCount = async (cargo) => {
   const whereClause = getWhereClauseByCargo(cargo);
@@ -118,10 +210,38 @@ const getAllPermisosCount = async (cargo) => {
   });
 };
 
+const getPermisosPendientes = async () => {
+  try {
+    // Buscar permisos con cualquier estado en "Pendiente"
+    const permisosPendientes = await Permisos.findAll({
+      where: {
+        [Op.or]: [
+          { estadoPermiso: 'Pendiente' },
+          { estadoPermisoJefeArea: 'Pendiente' },
+          { estadoPermsioGestionHumana: 'Pendiente' }
+        ]
+      },
+      include: [
+        {
+          model: Colaborador,
+          attributes: ['nombres', 'apellidos'],
+          as: 'colaborador_asociation'
+        }
+      ]
+    });
+
+    return permisosPendientes;
+  } catch (error) {
+    console.error('Error al obtener permisos pendientes:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   createPermiso,
   updatePermisos,
-  getAllPermisos,
+  getAllPermisosByCargo,
   getAllPermisosByColaborador,
   getAllPermisosCount,
+  getPermisosPendientes
 };

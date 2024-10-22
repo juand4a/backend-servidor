@@ -38,6 +38,7 @@ const Entrada = sequelize.define('entrada', {
   kilometraje: {
     type: DataTypes.INTEGER(2),
     defaultValue: null,
+    allowNull: true,
   },
   placa: {
     type: DataTypes.STRING(20),
@@ -72,8 +73,11 @@ const Entrada = sequelize.define('entrada', {
     defaultValue: null,
   },kilometraje_salida: {
     type: DataTypes.STRING(10),
-    allowNull: false,
-  }
+    allowNull: true
+    },primer_cliente:{
+      type: DataTypes.STRING(100),
+      allowNull: true
+    }
 
 }, {
   tableName: 'entrada',

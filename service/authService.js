@@ -3,7 +3,6 @@
 const Colaborador = require('../models/colaborador');
 const Verificacion = require('../models/verificacion');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const { addToken, isTokenBlacklisted } = require('./../controllers/blacklist');
 const Genero = require('../models/Genero');
@@ -11,29 +10,31 @@ const Cargo = require('../models/Cargo');
 const tipoSangre = require('../models/TipoSangre');
 const tipoContrato = require('../models/TipoContrato');
 
-const login = async (correo, pw) => {
-  const colaborador = await Colaborador.findOne({
-    where: { correo },
-    include: [
-      { model: Genero, attributes: ['genero'], as: 'genero_asociation' },
-      { model: Cargo, attributes: ['cargo'], as: 'cargo_asociation' },
-      { model: tipoSangre, attributes: ['grupoSanguineo'], as: 'tipoSangre_asociation' },
-      { model: tipoContrato, attributes: ['tipoContrato'], as: 'tipoContrato_asociation' },
-    ],
-  });
+const login = async (email, pw) => {
+  try {
+    const user = await Colaborador.findOne({
+      where: { correo: email },
+      attributes: ['correo', 'pw'], // Solo los campos necesarios para la autenticación
+    });
 
-  if (!colaborador) {
-    throw new Error('Correo electrónico no encontrado');
+    if (!user) {
+      return { error: 'Usuario no encontrado', status: 401 };
+    }
+
+    // Compara la contraseña proporcionada con la almacenada (sin usar bcrypt)
+    if (pw !== user.pw) {
+      return { error: 'Contraseña incorrecta', status: 401 };
+    }
+
+    // Genera el token con información mínima necesaria
+    const token = jwt.sign({ email: user.correo }, 'secretKey', { expiresIn: '1h' });
+    return { user: { email: user.correo }, token };
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error.message);
+    return { error: 'Error interno del servidor', status: 500 };
   }
-
-  const isMatch = await bcrypt.compare(pw, colaborador.pw);
-  if (!isMatch) {
-    throw new Error('Contraseña incorrecta');
-  }
-
-  const token = jwt.sign({ correo: colaborador.correo }, 'secretKey');
-  return { colaborador: colaborador.toJSON(), token };
 };
+
 
 const logout = (token) => {
   if (isTokenBlacklisted(token)) {

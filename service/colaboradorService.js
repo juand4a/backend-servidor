@@ -21,9 +21,67 @@ const createColaborador = async (colaboradorData) => {
     throw new Error('Error al crear el colaborador');
   }
 };
+// Servicio para obtener colaboradores con codigo_vendedor diferente de 0
+const getColaboradoresByCodigoVendedor = async () => {
+  try {
+    // Realiza la consulta para obtener colaboradores con codigo_vendedor diferente de 0
+    const colaboradores = await Colaborador.findAll({
+      where: {
+        codigoVendedor: {
+          [Op.ne]: 0, // Filtrar donde codigo_vendedor es diferente de 0
+        },
+      },
+      attributes: ['id', 'nombres', 'apellidos', 'codigoVendedor'], // Asegúrate de incluir codigo_vendedor
+    });
 
-const getAllColaboradores = async () => {
+    return colaboradores;
+  } catch (error) {
+    console.error('Error en getColaboradoresByCodigoVendedor:', error);
+    throw new Error('Error al obtener los colaboradores con código de vendedor diferente de 0');
+  }
+};
+
+
+const getColaboradoresByCargo17 = async () => {
+  try {
+    const colaboradores = await Colaborador.findAll({
+      where: { cargo: 17 },
+      attributes: ['id', 'nombres', 'apellidos'],
+    });
+
+    return colaboradores;
+  } catch (error) {
+    console.error('Error en getColaboradoresByCargo17:', error);
+    throw new Error('Error al obtener los colaboradores con cargo 17');
+  }
+};
+
+const getAllColaboradores = async (userCargo) => {
+  // Definir la condición base: muestra todos los colaboradores si el cargo es 1, 2, 3, 4, 8
+  let whereCondition = {};
+
+  // Verificar el cargo del usuario que solicita la información y definir la condición de filtrado
+  if ([1, 2, 3, 4, 8].includes(userCargo)) {
+    // No se aplica filtro adicional; se muestran todos los colaboradores
+    whereCondition = {};
+  } else if (userCargo === 10) {
+    // Si el cargo es 10, mostrar solo colaboradores con los cargos 11, 12, 13, 14, 15
+    whereCondition = {
+      cargo: [11, 12, 13, 14, 15],
+    };
+  } else if (userCargo === 16) {
+    // Si el cargo es 16, mostrar solo colaboradores con los cargos 17, 18, 19, 20, 21, 22
+    whereCondition = {
+      cargo: [17, 18, 19, 20, 21, 22],
+    };
+  } else {
+    // Si no se cumple ninguna condición, devolver un array vacío
+    return [];
+  }
+
+  // Buscar colaboradores con las condiciones definidas
   return await Colaborador.findAll({
+    where: whereCondition, // Añadir la condición al query
     include: [
       { model: Genero, attributes: ['genero'], as: 'genero_asociation' },
       { model: Cargo, attributes: ['cargo', 'area'], as: 'cargo_asociation' },
@@ -39,6 +97,7 @@ const getAllColaboradores = async () => {
   });
 };
 
+
 const getColaboradorById = async (id) => {
   return await Colaborador.findByPk(id, {
     include: [
@@ -48,12 +107,24 @@ const getColaboradorById = async (id) => {
     ],
   });
 };
-
 const updateColaborador = async (documento, colaboradorData) => {
-  const [updatedRows] = await Colaborador.update(colaboradorData, { where: { documento } });
+  console.log('Documento en el servicio:', documento); // Debug
+  console.log('Datos a actualizar en el servicio:', colaboradorData); // Debug
+  
+  const [updatedRows] = await Colaborador.update(colaboradorData, {
+    where: { documento: documento }, // Asegúrate de que sea numérico aquí
+  });
   return updatedRows;
 };
 
+
+
+// Método para obtener el colaborador por documento
+const getColaboradorByDocumento = async (documento) => {
+  return await Colaborador.findOne({
+    where: { documento },
+  });
+};
 const deleteColaborador = async (id) => {
   const deletedRows = await Colaborador.destroy({ where: { id } });
   return deletedRows;
@@ -125,4 +196,7 @@ module.exports = {
   getAllColaboradoresTotal,
   getAllColaboradoresByCargo,
   getAllColaboradoresByAprendiz,
+  getColaboradorByDocumento,
+  getColaboradoresByCargo17,
+  getColaboradoresByCodigoVendedor
 };

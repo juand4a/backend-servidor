@@ -14,7 +14,7 @@ const Colillas = sequelize.define('colillaspagocolaborador', {
   },
   fechaPago: { 
     type: DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
   },
   fechaSubida: { 
     type: DataTypes.DATE,
@@ -22,19 +22,19 @@ const Colillas = sequelize.define('colillaspagocolaborador', {
   },
   url: { 
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   fechaPeriodoInicio: { 
     type: DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
   },
   fechaPeriodoFin: { 
     type: DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
   },
   facturaPago: { 
     type: DataTypes.INTEGER(11),
-    allowNull: false,
+    allowNull: true,
   },
   
 }, {

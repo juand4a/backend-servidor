@@ -148,6 +148,10 @@ const Colaborador = sequelize.define('colaborador', {
     type: DataTypes.STRING(10),
     defaultValue: null,
   },
+  codigoVendedor:{
+    type:DataTypes.STRING(10),
+    defaultValue:null
+  }
 
 }, {
   tableName: 'colaborador',
@@ -163,4 +167,11 @@ Colaborador.belongsTo(Eps, { foreignKey: 'eps', as: 'eps_asociation' });
 Colaborador.belongsTo(Afp, { foreignKey: 'afp', as: 'afp_asociation' });
 Colaborador.belongsTo(Portafolio, { foreignKey: 'portafolioId', as: 'portafolio_asociation' });
 Colaborador.belongsTo(EstadoCivil, { foreignKey: 'estadoCivil', as: 'estadoCivil_asociation' });
+// Relación de un colaborador con su jefe inmediato
+Colaborador.belongsTo(Colaborador, {
+  foreignKey: 'jefeInmediato',  // Clave que almacena el documento del jefe
+  targetKey: 'documento',       // Campo en el modelo Colaborador al que apunta 'jefeInmediato'
+  as: 'jefe_asociation'
+});
+
 module.exports = Colaborador;

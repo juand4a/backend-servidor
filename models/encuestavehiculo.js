@@ -28,11 +28,24 @@ const EncuestaVehiculo = sequelize.define('encuestavehiculo', {
     type: DataTypes.DATE,
     allowNull: false,
   },
-  
-
 }, {
   tableName: 'encuestavehiculo',
   timestamps: false,
 });
+
+
+const ElementosProteccionEncuestaVehiculo = require('./elementosproteccionencuestavehiculo');
+const HerramientasProteccionEncuestaVehiculo = require('./herramientasencuestavehiculo');
+const NivelesEncuestaVehiculo = require('./nivelesencuestavehiculo');
+const PapelesEncuestaVehiculo = require('./papelesencuestavehiculo');
+const Colaborador=require('./colaborador')
+
+// Configuración de asociaciones
+EncuestaVehiculo.hasMany(ElementosProteccionEncuestaVehiculo, { foreignKey: 'idEncuesta', as: 'elementosProteccion' });
+EncuestaVehiculo.hasMany(HerramientasProteccionEncuestaVehiculo, { foreignKey: 'idEncuesta', as: 'herramientasProteccion' });
+EncuestaVehiculo.hasMany(NivelesEncuestaVehiculo, { foreignKey: 'idEncuesta', as: 'nivelesVehiculo' });
+EncuestaVehiculo.hasMany(PapelesEncuestaVehiculo, { foreignKey: 'idEncuesta', as: 'papelesVehiculo' });
+EncuestaVehiculo.belongsTo(Colaborador, { foreignKey: 'idColaborador', targetKey: 'documento', as: 'colaborador_asociation' });
+
 
 module.exports = EncuestaVehiculo;

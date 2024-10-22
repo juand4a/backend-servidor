@@ -1,17 +1,70 @@
 // controllers/authController.js
 
 const authService = require('../service/authService');
+const Colaborador = require('../models/colaborador');
+const Genero = require('../models/Genero');
+const Cargo = require('../models/Cargo');
+const tipoSangre = require('../models/TipoSangre');
+const tipoContrato = require('../models/TipoContrato');
+// controllers/authController.js
+const { addToken, isTokenBlacklisted } = require('./../controllers/blacklist');
+const jwt = require('jsonwebtoken');
 
-exports.login = async (req, res) => {
-  try {
-    const { correo, pw } = req.body;
-    const { colaborador, token } = await authService.login(correo, pw);
-    res.json({ success: true, colaborador, token });
-  } catch (error) {
-    console.error('Error al iniciar sesión:', error.message);
-    res.status(401).json({ error: error.message });
-  }
+exports.login = (req, res) => {
+  const { correo, pw } = req.body;
+  console.log('Correo:', correo);
+  console.log('Contraseña:', pw);
+
+  Colaborador.findOne({
+    where: { correo },
+    include: [
+      {
+        model: Genero,
+        attributes: ['genero'],
+        as: 'genero_asociation'
+      },
+      {
+        model: Cargo,
+        attributes: ['cargo'],
+        as: 'cargo_asociation'
+      },
+      {
+        model: tipoSangre,
+        attributes: ['grupoSanguineo'],
+        as: 'tipoSangre_asociation'
+      },
+      {
+        model: tipoContrato,
+        attributes: ['tipoContrato'],
+        as: 'tipoContrato_asociation'
+      }
+    ]
+  })
+  .then(colaborador => {
+    if (!colaborador) {
+      return res.status(404).json({ error: 'Correo electrónico no encontrado' });
+    }
+
+    // Verificación directa de la contraseña sin usar bcrypt
+    if (pw === colaborador.pw) {
+      const colaboradorData = colaborador.toJSON();
+      const token = jwt.sign({ correo: colaborador.correo }, 'secretKey', { expiresIn: '1h' });
+      res.json({
+        success: true,
+        colaborador: colaboradorData,
+        token
+      });
+    } else {
+      res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    res.status(500).json({ error: 'Ocurrió un error al iniciar sesión' });
+  });
 };
+
+
 
 exports.logout = (req, res) => {
   try {

@@ -4,12 +4,13 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize('reddemarcas_db', 'admin', 'Lucia290820*', {
   host: 'reddemarcasdb.cr48gy6omv0v.us-east-1.rds.amazonaws.com',
   dialect: 'mysql',
-  logging: false, 
+  logging: console.log,
 });
-// const sequelize = new Sequelize('rdm_general_dev', 'root', '', {
+// const sequelize = new Sequelize('redm_dev', 'root', '', {
 //   host: 'localhost',
 //   dialect: 'mysql',
-//   logging: false, 
+//   port: 3307, // Aquí se especifica el puerto
+//   logging: console.log,
 // });
 
 // Probar la conexión

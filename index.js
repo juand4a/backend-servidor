@@ -2,16 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors'); 
-const helmet = require('helmet');
-const compression = require('compression');
 const { sessionSecret } = require('./config');
 require('dotenv').config();
 
 const app = express();
 
 // Middlewares
-app.use(helmet());
-app.use(compression());
+
 app.use(bodyParser.json({ limit: '300mb' }));
 app.use(bodyParser.urlencoded({ limit: '300mb', extended: true }));
 app.use(session({
@@ -30,6 +27,12 @@ apiRouter.use('/foreingkey', require('./routes/foreingkeys'));
 apiRouter.use('/anuncios', require('./routes/anuncios'));
 apiRouter.use('/devolucion', require('./routes/devolucion'));
 apiRouter.use('/encuesta', require('./routes/encuestaVehiculo'));
+apiRouter.use('/colillas', require('./routes/colillas'));
+apiRouter.use('/permisos', require('./routes/permisos'));
+apiRouter.use('/interacciones', require('./routes/comentariosLikes'));
+apiRouter.use('/ejecucionImpecable', require('./routes/negociosRoutes'));
+
+
 // (y más rutas...)
 
 app.use('/api', apiRouter);

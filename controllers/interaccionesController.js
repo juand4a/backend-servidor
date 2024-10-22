@@ -1,6 +1,6 @@
 // controllers/interaccionesController.js
 
-const interaccionesService = require('../services/interaccionesService');
+const interaccionesService = require('../service/interaccionesService');
 
 exports.createLikes = async (req, res) => {
   const anuncioId = req.params.anuncioId;

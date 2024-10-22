@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const likesComentariosController = require('../controllers/ComentariosLikesControllers');
+const likesComentariosController = require('../controllers/interaccionesController');
 
 // Rutas CRUD de colaborador
 

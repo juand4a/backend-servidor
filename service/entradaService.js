@@ -1,5 +1,6 @@
 // services/entradaService.js
-
+const fs = require('fs');
+const path = require('path');
 const Entrada = require('../models/entrada');
 const Colaborador = require('../models/colaborador');
 const { Op, literal } = require('sequelize');
@@ -8,8 +9,10 @@ const PartesEncuestaVehiculo=require("./../models/partesencuestavehiculo")
 const HerramientasEncuestaVehiculo=require("./../models/herramientasencuestavehiculo")
 const NivelesEncuestaVehiculo=require("./../models/nivelesencuestavehiculo")
 const PapelesEncuestaVehiculo=require("./../models/papelesencuestavehiculo")
-const EncuestaVehiculo=require("./../models/encuestavehiculo");
+const ElementosProteccionEncuesta=require("./../models/elementosproteccionencuestavehiculo");
 const Cargo = require('../models/Cargo');
+const sequelize = require('../config/database');
+const EncuestaVehiculo = require('../models/encuestavehiculo');
 
 const getAllEntradas = async () => {
   return await Entrada.findAll({
@@ -61,60 +64,97 @@ const getEntradaByFecha = async (fecha) => {
 
 const getEntrada = async (fecha, cargo) => {
   const fechaSinHora = moment(fecha, 'YYYY-MM-DD').format('YYYY-MM-DD');
-  let whereClause = { fecha: { [Op.startsWith]: fechaSinHora } };
+  const whereClause = { fecha: { [Op.startsWith]: fechaSinHora } };
 
-  if (cargo === '9') {
-    whereClause['$colaborador_asociation.cargo$'] = { [Op.or]: ['10', '6'] };
-  } else if (cargo === '4') {
-    whereClause['$colaborador_asociation.cargo$'] = '5';
+  // Ajuste de las condiciones de filtrado basadas en el cargo
+  let filtrarPorCargo = false; // Variable para indicar si se debe filtrar por cargo
+
+  switch (cargo) {
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '8':
+      // No se aplica filtro específico, se muestran todas las asistencias
+      break;
+    case '10':
+      // Mostrar solo las asistencias de los cargos 11, 12, 13, 14, 15
+      whereClause['$colaborador_asociation.cargo$'] = { [Op.in]: ['11', '12', '13', '14', '15'] };
+      filtrarPorCargo = true;
+      break;
+    case '16':
+    case '17':
+      // Mostrar solo las asistencias de los cargos 17, 18, 19, 20, 21, 22
+      whereClause['$colaborador_asociation.cargo$'] = { [Op.in]: ['17', '18', '19', '20', '21', '22'] };
+      filtrarPorCargo = true;
+      break;
+    default:
+      // No se muestran asistencias si no se cumple con ninguna condición
+      return [];
   }
 
-  const colaboradores = await Colaborador.findAll({
-    attributes: ['documento', 'nombres', 'apellidos', 'fotoUrl'],
-    include: [
-      {
-        model: Cargo,
-        attributes: ['cargo'],
-        as: 'cargo_asociation',
+  // Obtener colaboradores y entradas de manera eficiente, filtrando por estado_cuenta activo
+  const [colaboradores, entradas] = await Promise.all([
+    Colaborador.findAll({
+      attributes: ['documento', 'nombres', 'apellidos', 'fotoUrl', 'estadoCuenta'], // Agregar estado_cuenta
+      where: {
+        estadoCuenta: 1, // Solo traer colaboradores activos (estado_cuenta = 1)
       },
-    ],
-  });
+      include: [
+        {
+          model: Cargo,
+          attributes: ['cargo'],
+          as: 'cargo_asociation',
+        },
+      ],
+    }),
+    Entrada.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Colaborador,
+          attributes: ['documento', 'cargo'],
+          as: 'colaborador_asociation',
+        },
+      ],
+    }),
+  ]);
 
-  const entradas = await Entrada.findAll({
-    where: whereClause,
-    include: [
-      {
-        model: Colaborador,
-        attributes: ['documento', 'cargo'],
-        as: 'colaborador_asociation',
-      },
-    ],
-  });
+  // Si se necesita filtrar por cargo y no hay entradas encontradas, devolvemos una lista vacía
+  if (filtrarPorCargo && entradas.length === 0) {
+    return [];
+  }
 
-  const horaEntradaEst = moment('07:00:00', 'HH:mm:ss');
+  // Mapear entradas por documento del colaborador
   const entradasPorDocumento = entradas.reduce((acc, entrada) => {
     acc[entrada.documento_colaborador] = entrada;
     return acc;
   }, {});
 
+  // Función para determinar el tipo de llegada basado en el cargo
+  const determinarTipoLlegada = (entradaHora, cargo) => {
+    if (['1', '2', '3', '4', '5', '8'].includes(cargo)) {
+      return 'Llegada Sin Restricción';
+    } else if (['10', '11', '12', '13', '14', '15'].includes(cargo)) {
+      const horaLimite = moment('05:00:00', 'HH:mm:ss');
+      return entradaHora.isAfter(horaLimite) ? 'Llegada Tarde' : 'A Tiempo';
+    } else if (['16', '17', '18', '19', '20', '21', '22'].includes(cargo)) {
+      const horaLimite = moment('06:00:00', 'HH:mm:ss');
+      return entradaHora.isAfter(horaLimite) ? 'Llegada Tarde' : 'A Tiempo';
+    } else {
+      return 'Asistencia Marcada';
+    }
+  };
+
   return colaboradores.map((colaborador) => {
     const entradaColaborador = entradasPorDocumento[colaborador.documento];
-    let tipoLlegada;
+    let tipoLlegada = 'No Marcó Asistencia';
     let entradaData = null;
 
-    if (!entradaColaborador) {
-      tipoLlegada = 'No Marcó Asistencia';
-    } else {
+    if (entradaColaborador) {
       const entradaHora = moment(entradaColaborador.entrada, 'HH:mm:ss');
-
-      if (entradaHora.isBefore(horaEntradaEst)) {
-        tipoLlegada = 'Llegada Temprana';
-      } else if (entradaHora.isAfter(horaEntradaEst)) {
-        tipoLlegada = 'Llegada Tarde';
-      } else {
-        tipoLlegada = 'A Tiempo';
-      }
-
+      tipoLlegada = determinarTipoLlegada(entradaHora, colaborador.cargo_asociation?.cargo);
       entradaData = {
         documento: entradaColaborador.documento_colaborador,
         fecha: entradaColaborador.fecha,
@@ -131,6 +171,8 @@ const getEntrada = async (fecha, cargo) => {
         latitud_entrada: entradaColaborador.latitud_entrada,
         longitud_entrada: entradaColaborador.longitud_entrada,
         kilometraje_salida: entradaColaborador.kilometraje_salida,
+        kilometraje_salida: entradaColaborador.kilometraje_salida,
+        primer_cliente:entradaColaborador.primer_cliente
       };
     }
 
@@ -146,80 +188,117 @@ const getEntrada = async (fecha, cargo) => {
   });
 };
 
+
+
+
+
+// Función para crear una entrada con los datos de las encuestas
 const createEntrada = async (entradaData, encuestasData) => {
-  // Validar que los datos necesarios están presentes
-  if (!entradaData || !encuestasData) {
-    throw new Error('Faltan datos necesarios para crear la entrada.');
-  }
-
   try {
-    const nuevaEntrada = await Entrada.create(entradaData);
+    const partesEncuestaVehiculo = typeof encuestasData.partesEncuestaVehiculo === 'string'
+      ? JSON.parse(encuestasData.partesEncuestaVehiculo || '[]')
+      : encuestasData.partesEncuestaVehiculo || [];
 
-    const {
-      partesEncuestaVehiculo = [],
-      papelesEncuestaVehiculo = [],
-      herramientasEncuestaVehiculo = [],
-      nivelesEncuestaVehiculo = [],
-    } = encuestasData;
+    const papelesEncuestaVehiculo = typeof encuestasData.papelesEncuestaVehiculo === 'string'
+      ? JSON.parse(encuestasData.papelesEncuestaVehiculo || '[]')
+      : encuestasData.papelesEncuestaVehiculo || [];
 
-    // Validar que tenemos arrays antes de proceder
-    if (!Array.isArray(partesEncuestaVehiculo) || !Array.isArray(papelesEncuestaVehiculo) ||
-        !Array.isArray(herramientasEncuestaVehiculo) || !Array.isArray(nivelesEncuestaVehiculo)) {
+    const herramientasEncuestaVehiculo = typeof encuestasData.herramientasEncuestaVehiculo === 'string'
+      ? JSON.parse(encuestasData.herramientasEncuestaVehiculo || '[]')
+      : encuestasData.herramientasEncuestaVehiculo || [];
+
+    const nivelesEncuestaVehiculo = typeof encuestasData.nivelesEncuestaVehiculo === 'string'
+      ? JSON.parse(encuestasData.nivelesEncuestaVehiculo || '[]')
+      : encuestasData.nivelesEncuestaVehiculo || [];
+
+    const elementosProteccionEncuesta = typeof encuestasData.elementosProteccionEncuesta === 'string'
+      ? JSON.parse(encuestasData.elementosProteccionEncuesta || '[]')
+      : encuestasData.elementosProteccionEncuesta || [];
+
+    if (!Array.isArray(partesEncuestaVehiculo) ||
+      !Array.isArray(papelesEncuestaVehiculo) ||
+      !Array.isArray(herramientasEncuestaVehiculo) ||
+      !Array.isArray(nivelesEncuestaVehiculo) ||
+      !Array.isArray(elementosProteccionEncuesta)) {
       throw new Error('Uno o más de los datos de encuesta no son arrays válidos.');
     }
 
-    const partesEncuestaGuardadas = await PartesEncuestaVehiculo.bulkCreate(
-      partesEncuestaVehiculo.map(partes => ({
-        idEncuesta: nuevaEntrada.id,
-        idParteVehiculo: partes.idParteVehiculo,
-        estado: partes.estado,
-      }))
-    );
+    const t = await sequelize.transaction();
 
-    const herramientasEncuestaGuardadas = await HerramientasEncuestaVehiculo.bulkCreate(
-      herramientasEncuestaVehiculo.map(herramienta => ({
-        idEncuesta: nuevaEntrada.id,
-        idHerramientaVehiculo: herramienta.idHerramientaVehiculo,
-        verificado: herramienta.verificado,
-      }))
-    );
+    try {
+      // Crear la entrada vehicular
+      const nuevaEntrada = await Entrada.create(entradaData, { transaction: t });
 
-    const nivelesEncuestaGuardadas = await NivelesEncuestaVehiculo.bulkCreate(
-      nivelesEncuestaVehiculo.map(herramienta => ({
-        idEncuesta: nuevaEntrada.id,
-        idParteNivelVehiculo: herramienta.idParteNivelVehiculo,
-      }))
-    );
+      // Crear los detalles de la encuesta (partes, herramientas, niveles, papeles, elementos de protección)
+      await PartesEncuestaVehiculo.bulkCreate(
+        partesEncuestaVehiculo.map(partes => ({
+          idEncuesta: nuevaEntrada.id,
+          idParteVehiculo: partes.idParteVehiculo,
+          estado: partes.estado,
+        })),
+        { transaction: t }
+      );
 
-    const papelesEncuestaGuardados = await PapelesEncuestaVehiculo.bulkCreate(
-      papelesEncuestaVehiculo.map(papeles => ({
-        idEncuesta: nuevaEntrada.id,
-        idPapelVehiculo: papeles.idPapelVehiculo,
-        poseeDocumento: papeles.poseeDocumento,
-      }))
-    );
+      await HerramientasEncuestaVehiculo.bulkCreate(
+        herramientasEncuestaVehiculo.map(herramienta => ({
+          idEncuesta: nuevaEntrada.id,
+          idHerramientaVehiculo: herramienta.idHerramientaVehiculo,
+          verificado: herramienta.verificado,
+        })),
+        { transaction: t }
+      );
 
-    const EncuestaGuardados = await EncuestaVehiculo.create({
-      idColaborador: nuevaEntrada.documento_colaborador,
-      placa: nuevaEntrada.placa,
-      observaciones: 'N/A',
-      kilometraje: nuevaEntrada.kilometraje,
-      fecha: nuevaEntrada.fecha,
-    });
+      await NivelesEncuestaVehiculo.bulkCreate(
+        nivelesEncuestaVehiculo.map(nivel => ({
+          idEncuesta: nuevaEntrada.id,
+          idParteNivelVehiculo: nivel.idParteNivelVehiculo,
+        })),
+        { transaction: t }
+      );
 
-    return {
-      nuevaEntrada,
-      partesEncuestaGuardadas,
-      herramientasEncuestaGuardadas,
-      nivelesEncuestaGuardadas,
-      papelesEncuestaGuardados,
-      EncuestaGuardados,
-    };
+      await PapelesEncuestaVehiculo.bulkCreate(
+        papelesEncuestaVehiculo.map(papeles => ({
+          idEncuesta: nuevaEntrada.id,
+          idPapelVehiculo: papeles.idPapelVehiculo,
+          poseeDocumento: papeles.poseeDocumento,
+        })),
+        { transaction: t }
+      );
+
+      await ElementosProteccionEncuesta.bulkCreate(
+        elementosProteccionEncuesta.map(elemento => ({
+          idEncuesta: nuevaEntrada.id,
+          idElementoProteccion: elemento.idElementoProteccion,
+          verificado: elemento.verificado,
+        })),
+        { transaction: t }
+      );
+
+      // Finalmente, crear el registro en la tabla `EncuestaVehiculo`
+      const nuevaEncuestaVehiculo = await EncuestaVehiculo.create({
+        idColaborador: entradaData.documento_colaborador,
+        placa: entradaData.placa,
+        observaciones: entradaData.observaciones || 'N/A',
+        kilometraje: entradaData.kilometraje,
+        fecha: entradaData.fecha,
+      }, { transaction: t });
+
+      // Confirmar la transacción
+      await t.commit();
+
+      return { nuevaEntrada, nuevaEncuestaVehiculo };
+    } catch (error) {
+      // En caso de error, revertir la transacción
+      await t.rollback();
+      console.error('Error al crear la entrada y sus encuestas:', error);
+      throw new Error('Error al procesar la solicitud.');
+    }
   } catch (error) {
-    console.error('Error al crear la entrada y sus encuestas:', error);
-    throw new Error('Error al procesar la solicitud.');
+    console.error('Error al parsear los datos de la encuesta:', error);
+    throw new Error('Uno o más de los datos de encuesta no son válidos.');
   }
 };
+
 
 
 const updateEntrada = async (documento, fecha, updateData) => {

@@ -21,7 +21,7 @@ router.get('/cargo/:fecha/:cargo', entradaController.getEntrada); // Obtener ent
 router.get('/:fecha', entradaController.getEntradaByFecha); // Obtener entradas por fecha (esta ruta es la más general y debería ir al final)
 
 // Rutas para crear y actualizar entradas
-router.post('/', upload.single('foto_entrada'), entradaController.createEntrada); // Asegúrate de que el nombre del campo ('foto_entrada') coincida con el nombre del campo en el formulario de carga
-router.put('/actualizar/:documento_colaborador/:fecha', uploadS.single('foto_salida'), entradaController.updateEntrada); // Actualizar una entrada por documento y fecha
+router.post('/', entradaController.createEntrada); 
+router.put('/actualizar/:documento_colaborador/:fecha',  entradaController.updateEntrada); // Actualizar una entrada por documento y fecha
 
 module.exports = router;
